@@ -509,12 +509,6 @@ if (typeof $ === 'undefined') {
 }
 
 $(function() {
-	// Detect encoding.
-	if (document.defaultCharset)
-	{
-		runByond("?_src_=chat&proc=encoding&encoding=" + escaper(document.defaultCharset));
-	}
-
 	$messages = $('#messages');
 	$subOptions = $('#subOptions');
 
