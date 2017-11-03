@@ -120,7 +120,6 @@ var/list/SPS_list = list()
 		if (usr.get_active_hand() != src || usr.stat) //second check in case some chucklefuck drops the GPS while typing the tag
 			to_chat(usr, "<span class = 'caution'>The GPS needs to be kept in your active hand!</span>")
 			return 1
-		a = strict_ascii(a)
 		if(length(a) < 4 || length(a) > 5)
 			to_chat(usr, "<span class = 'caution'>The tag must be between four and five characters long!</span>")
 		else
