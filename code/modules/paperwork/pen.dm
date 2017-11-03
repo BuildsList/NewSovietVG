@@ -26,8 +26,8 @@
 /datum/speech_filter_action/bbcode/img/Run(var/text, var/mob/user, var/atom/movable/P)
 	expr.index = 1
 	while(expr.Find(text, expr.index))
-		message_admins("[key_name_admin(user)] added an image ([html_encode(expr.group[1])]) to [P] at [formatJumpTo(get_turf(P))]")
-		var/rtxt   = "<img src=\"[html_encode(expr.group[1])]\" />"
+		message_admins("[key_name_admin(user)] added an image ([lhtml_encode(expr.group[1])]) to [P] at [formatJumpTo(get_turf(P))]")
+		var/rtxt   = "<img src=\"[lhtml_encode(expr.group[1])]\" />"
 		text       = copytext(text, 1, expr.index) + rtxt + copytext(text, expr.index + length(expr.match))
 		expr.index = expr.index + length(rtxt)
 	return text
@@ -35,8 +35,8 @@
 /datum/speech_filter_action/bbcode/video/Run(var/text, var/mob/user, var/atom/movable/P)
 	expr.index = 1
 	while(expr.Find(text, expr.index))
-		message_admins("[key_name_admin(user)] added a video ([html_encode(expr.group[1])]) to [P] at [formatJumpTo(get_turf(P))]")
-		var/rtxt   = "<embed src=\"[html_encode(expr.group[1])]\" width=\"420\" height=\"344\" type=\"x-ms-wmv\" volume=\"85\" autoStart=\"0\" autoplay=\"true\" />"
+		message_admins("[key_name_admin(user)] added a video ([lhtml_encode(expr.group[1])]) to [P] at [formatJumpTo(get_turf(P))]")
+		var/rtxt   = "<embed src=\"[lhtml_encode(expr.group[1])]\" width=\"420\" height=\"344\" type=\"x-ms-wmv\" volume=\"85\" autoStart=\"0\" autoplay=\"true\" />"
 		text       = copytext(text, 1, expr.index) + rtxt + copytext(text, expr.index + length(expr.match))
 		expr.index = expr.index + length(rtxt)
 	return text
@@ -47,7 +47,7 @@
 		var/regex/youtubeid = regex("(youtu\\.be\\/|youtube\\.com\\/(watch\\?(.*&)?v=|(embed|v)\\/))(\[\\w\]+)", "gi")
 		youtubeid.Find(expr.group[1])
 		var/link = "http://www.youtube.com/embed/[youtubeid.group[5]]?autoplay=1&loop=1&controls=0&showinfo=0&rel=0"
-		message_admins("[key_name_admin(user)] added a youtube video ([html_encode(expr.group[1])]) to [P] at [formatJumpTo(get_turf(P))]")
+		message_admins("[key_name_admin(user)] added a youtube video ([lhtml_encode(expr.group[1])]) to [P] at [formatJumpTo(get_turf(P))]")
 		var/rtxt   = "<iframe width=\"420\" height=\"345\" src=\"[link]\" frameborder=\"0\">"
 		text       = copytext(text, 1, expr.index) + rtxt + copytext(text, expr.index + length(expr.match))
 		expr.index = expr.index + length(rtxt)

@@ -251,5 +251,3 @@ proc/get_space_area()
 
 
 #define subtypesof(A) (typesof(A) - A)
-
-#define LIBVG(function, arguments...) call("./libvg.[world.system_type == "UNIX" ? "so" : "dll"]", function)(arguments)

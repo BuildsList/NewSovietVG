@@ -5,7 +5,7 @@
 	if(say_disabled)
 		to_chat(usr, "<span class='danger'>Speech is currently admin-disabled.</span>")
 		return
-	usr.say(to_utf8(message, usr))
+	usr.say(message)
 
 /mob/verb/whisper(message as text)
 	set name = "Whisper"
@@ -28,7 +28,7 @@
 		to_chat(usr, "<span class='danger'>Doing this will give us away!</span>")
 		return
 
-	message = utf8_sanitize(message, usr, MAX_MESSAGE_LEN)
+	message = trim(copytext(sanitize(message), 1, MAX_MESSAGE_LEN))
 
 	if(usr.stat == DEAD)
 		usr.emote_dead(message)
@@ -56,7 +56,7 @@
 
 
 	var/turf/T = get_turf(src)
-	message = src.say_quote("\"[html_encode(message)]\"")
+	message = src.say_quote("\"[lhtml_encode(message)]\"")
 	log_say("[name]/[key_name(src)] (@[T.x],[T.y],[T.z]) Deadsay: [message]")
 	//var/rendered = "<span class='game deadsay'><span class='prefix'>DEAD:</span> <span class='name'>[name]</span>[alt_name] <span class='message'>[message]</span></span>"
 	var/rendered2 = null//edited

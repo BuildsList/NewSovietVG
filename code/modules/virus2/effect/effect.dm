@@ -464,9 +464,9 @@
 			var/word = word_list[i]
 			if(punct)
 				word = copytext(word_list[i], 1, length(word_list[i]))
-			if(uppertext(word) == uppertext(x))
+			if(uppertext_alt(word) == uppertext_alt(x))
 				word_list[i] = virus_opposite_word_list[x] + punct
-			else if(uppertext(word) == uppertext(virus_opposite_word_list[x]))
+			else if(uppertext_alt(word) == uppertext_alt(virus_opposite_word_list[x]))
 				word_list[i] = x + punct
 
 	message = ""
@@ -626,7 +626,7 @@
 
 /datum/disease2/effect/chickenpox/activate(var/mob/living/carbon/mob)
 	if (prob(30))
-		mob.say(pick("BAWWWK!", "BAAAWWK!", "CLUCK!", "CLUUUCK!", "BAAAAWWWK!"))
+		mob.say(pick(" ”ƒ¿’!", " Œ Œ Œ!", " ” ¿–≈ ”!", " ”ƒ¿’!", " ”ƒ¿’!"))
 	if (prob(15))
 		mob.emote("me",1,"vomits up a chicken egg!")
 		playsound(mob.loc, 'sound/effects/splat.ogg', 50, 1)

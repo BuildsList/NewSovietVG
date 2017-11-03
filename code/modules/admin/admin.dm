@@ -230,9 +230,9 @@ var/global/floorIsLava = 0
 		else
 			f = 0
 		if(L in M.languages)
-			body += "<a href='?src=\ref[src];toglang=\ref[M];lang=[html_encode(k)]' style='color:#006600'>[k]</a>"
+			body += "<a href='?src=\ref[src];toglang=\ref[M];lang=[lhtml_encode(k)]' style='color:#006600'>[k]</a>"
 		else
-			body += "<a href='?src=\ref[src];toglang=\ref[M];lang=[html_encode(k)]' style='color:#ff0000'>[k]</a>"
+			body += "<a href='?src=\ref[src];toglang=\ref[M];lang=[lhtml_encode(k)]' style='color:#ff0000'>[k]</a>"
 
 	body += {"<br>
 		</body></html>
@@ -1274,7 +1274,7 @@ var/global/floorIsLava = 0
 */
 /datum/admins/proc/spawn_atom(var/object as text)
 	set category = "Debug"
-	set desc = "(atom path) Spawn an atom. Finish path with a period to hide subtypes, include any variable changes at the end like so: {name=\"Test\";amount=50}"
+	set desc = "(atom path) Spawn an atom. Finish path with a period to hide subtypes"
 	set name = "Spawn"
 
 	if(!check_rights(R_SPAWN))

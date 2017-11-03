@@ -880,7 +880,7 @@ var/global/list/obj/item/device/pda/PDAs = list()
 				dat += {"<h4><span class='pda_icon pda_chatroom'></span> Nanotrasen Relay Chat</h4>
 					<h4><span class='pda_icon pda_menu'></span> Detected Channels</h4>: <li>"}
 				for(var/datum/chatroom/C in chatrooms)
-					dat += "<a href='byond://?src=\ref[src];pdachannel=[C.name]'>#[html_encode(lowertext(C.name))]"
+					dat += "<a href='byond://?src=\ref[src];pdachannel=[C.name]'>#[lhtml_encode(lowertext(C.name))]"
 					if(C.password != "")
 						dat += " <span class='pda_icon pda_locked'></span>"
 					dat += "</li>"

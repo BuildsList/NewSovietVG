@@ -180,7 +180,7 @@ var/const/MAX_SAVE_SLOTS = 8
 
 	// jukebox volume
 	var/volume = 100
-	var/usewmp = 0 //whether to use WMP or VLC
+	var/usewmp = 1 //whether to use WMP or VLC
 
 	var/list/roles=list() // "role" => ROLEPREF_*
 
@@ -1000,7 +1000,7 @@ NOTE:  The change will take effect AFTER any current recruiting periods."}
 
 			if(medmsg != null)
 				medmsg = copytext(medmsg, 1, MAX_PAPER_MESSAGE_LEN)
-				medmsg = html_encode(medmsg)
+				medmsg = lhtml_encode(medmsg)
 
 				med_record = medmsg
 				SetRecords(user)
@@ -1010,7 +1010,7 @@ NOTE:  The change will take effect AFTER any current recruiting periods."}
 
 			if(secmsg != null)
 				secmsg = copytext(secmsg, 1, MAX_PAPER_MESSAGE_LEN)
-				secmsg = html_encode(secmsg)
+				secmsg = lhtml_encode(secmsg)
 
 				sec_record = secmsg
 				SetRecords(user)
@@ -1019,7 +1019,7 @@ NOTE:  The change will take effect AFTER any current recruiting periods."}
 
 			if(genmsg != null)
 				genmsg = copytext(genmsg, 1, MAX_PAPER_MESSAGE_LEN)
-				genmsg = html_encode(genmsg)
+				genmsg = lhtml_encode(genmsg)
 
 				gen_record = genmsg
 				SetRecords(user)
