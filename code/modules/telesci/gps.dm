@@ -75,9 +75,9 @@ var/list/SPS_list = list()
 			var/area/device_area = get_area(D)
 			var/device_tag = null
 			var/device_rip = null
-				var/obj/item/device/gps/G = D
-				device_tag = G.gpstag
-				device_rip = G.emped
+			var/obj/item/device/gps/G = D
+			device_tag = G.gpstag
+			device_rip = G.emped
 			device_data["tag"] = device_tag
 			if(device_rip)
 				device_data["location_text"] = "ERROR"

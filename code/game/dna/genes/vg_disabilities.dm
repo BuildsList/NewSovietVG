@@ -24,18 +24,18 @@
 	deactivation_message = "You feel fine again."
 
 /datum/dna/gene/disability/speech/whisper/New()
-		..()
-		block=WHISPERBLOCK
+	..()
+	block=WHISPERBLOCK
 
 /datum/dna/gene/disability/speech/whisper/can_activate(var/mob/M,var/flags)
-		// No loud whispering.
-		if(M_LOUD in M.mutations)
-			return 0
-		return ..(M,flags)
+	// No loud whispering.
+	if(M_LOUD in M.mutations)
+		return 0
+	return ..(M,flags)
 
 /datum/dna/gene/disability/speech/whisper/OnSay(var/mob/M, var/datum/speech/speech)
-		//M.whisper(message)
-		return 0
+	//M.whisper(message)
+	return 0
 
 
 /datum/dna/gene/disability/dizzy
@@ -124,10 +124,9 @@
 	activation_message = "You feel short of breath."
 	deactivation_message = "You can breathe normally again."
 	disability= ASTHMA
-	
+
 	mutation = M_ASTHMA
-	
+
 /datum/dna/gene/disability/asthma/New()
 	..()
 	block = ASTHMABLOCK
-	
