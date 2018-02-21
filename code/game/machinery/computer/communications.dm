@@ -435,7 +435,8 @@ var/shuttle_call/shuttle_calls[0]
 /obj/machinery/computer/communications/emag(mob/user as mob)
 	if(!emagged)
 		emagged = 1
-		to_chat(user, "Syndicate routing data uploaded!")
+		if(user)
+			to_chat(user, "Syndicate routing data uploaded!")
 		new/obj/effect/effect/sparks(get_turf(src))
 		playsound(loc,"sparks",50,1)
 		authenticated = 2
@@ -625,15 +626,15 @@ var/shuttle_call/shuttle_calls[0]
 /obj/machinery/computer/communications/Destroy()
 
 	for(var/obj/machinery/computer/communications/commconsole in machines)
-		if(istype(commconsole.loc,/turf) && commconsole != src)
+		if(istype(commconsole.loc,/turf) && commconsole != src && commconsole.z != map.zCentcomm)
 			return ..()
 
 	for(var/obj/item/weapon/circuitboard/communications/commboard in world)
-		if(istype(commboard.loc,/turf) || istype(commboard.loc,/obj/item/weapon/storage))
+		if((istype(commboard.loc,/turf) || istype(commboard.loc,/obj/item/weapon/storage)) && commboard.z != map.zCentcomm)
 			return ..()
 
 	for(var/mob/living/silicon/ai/shuttlecaller in player_list)
-		if(!shuttlecaller.stat && shuttlecaller.client && istype(shuttlecaller.loc,/turf))
+		if(!shuttlecaller.stat && shuttlecaller.client && istype(shuttlecaller.loc,/turf) && shuttlecaller.z != map.zCentcomm)
 			return ..()
 
 	if(ticker.mode.name == "revolution" || ticker.mode.name == "AI malfunction")
@@ -650,15 +651,15 @@ var/shuttle_call/shuttle_calls[0]
 /obj/item/weapon/circuitboard/communications/Destroy()
 
 	for(var/obj/machinery/computer/communications/commconsole in machines)
-		if(istype(commconsole.loc,/turf))
+		if(istype(commconsole.loc,/turf) && commconsole.z != map.zCentcomm)
 			return ..()
 
 	for(var/obj/item/weapon/circuitboard/communications/commboard in world)
-		if((istype(commboard.loc,/turf) || istype(commboard.loc,/obj/item/weapon/storage)) && commboard != src)
+		if((istype(commboard.loc,/turf) || istype(commboard.loc,/obj/item/weapon/storage)) && commboard != src && commboard.z != map.zCentcomm)
 			return ..()
 
 	for(var/mob/living/silicon/ai/shuttlecaller in player_list)
-		if(!shuttlecaller.stat && shuttlecaller.client && istype(shuttlecaller.loc,/turf))
+		if(!shuttlecaller.stat && shuttlecaller.client && istype(shuttlecaller.loc,/turf) && shuttlecaller.z != map.zCentcomm)
 			return ..()
 
 	if(ticker.mode.name == "revolution" || ticker.mode.name == "AI malfunction")

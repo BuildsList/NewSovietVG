@@ -44,7 +44,8 @@
 
 /obj/machinery/computer/cloning/initialize()
 	pod1 = findcloner()
-	pod1.connected = src
+	if(pod1 && !pod1.connected)
+		pod1.connected = src
 
 /obj/machinery/computer/cloning/multitool_menu(var/mob/user, var/obj/item/device/multitool/P)
 	return ""
@@ -66,7 +67,8 @@
 
 /obj/machinery/computer/cloning/proc/updatemodules()
 	scanner = findscanner()
-	scanner.connected = src
+	if(scanner && !scanner.connected)
+		scanner.connected = src
 
 /obj/machinery/computer/cloning/proc/findscanner()
 	var/obj/machinery/dna_scannernew/scannerf = null
@@ -108,7 +110,8 @@
 /obj/machinery/computer/cloning/emag(mob/user)
 	if(!emagged)
 		emagged = 1
-		user.visible_message("<span class='warning'>[user] slides something into \the [src]'s card-reader.</span>","<span class='warning'>You disable \the [src]'s safety overrides.</span>")
+		if(user)
+			user.visible_message("<span class='warning'>[user] slides something into \the [src]'s card-reader.</span>","<span class='warning'>You disable \the [src]'s safety overrides.</span>")
 
 /obj/machinery/computer/cloning/attack_paw(mob/user as mob)
 	return attack_hand(user)

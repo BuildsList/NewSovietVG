@@ -407,7 +407,7 @@
 		if("Track With Camera")
 			if(isAI(usr))
 				var/mob/living/silicon/ai/AI = usr
-				var/target_name = input(AI, "Choose who you want to track", "Tracking") as null|anything in AI.trackable_mobs()
+				var/target_name = input(AI, "Choose what you want to track", "Tracking") as null|anything in AI.trackable_atoms()
 				AI.ai_camera_track(target_name)
 
 		if("Toggle Camera Light")
@@ -453,12 +453,18 @@
 		if("Take Image")
 			if(isAI(usr))
 				var/mob/living/silicon/ai/AI = usr
-				AI.aicamera.toggle_camera_mode()
+				AI.aicamera.toggle_camera_mode(AI)
+			else if(isrobot(usr))
+				var/mob/living/silicon/robot/R = usr
+				R.aicamera.toggle_camera_mode(R)
 
 		if("View Images")
 			if(isAI(usr))
 				var/mob/living/silicon/ai/AI = usr
-				AI.aicamera.viewpictures()
+				AI.aicamera.viewpictures(AI)
+			else if(isrobot(usr))
+				var/mob/living/silicon/robot/R = usr
+				R.aicamera.viewpictures(R)
 
 		if("Configure Radio")
 			if(isAI(usr))

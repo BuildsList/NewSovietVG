@@ -636,6 +636,8 @@ var/const/MAX_SAVE_SLOTS = 8
 	HTML += ShowDisabilityState(user,DISABILITY_FLAG_DEAF,       "Deaf")
 	HTML += ShowDisabilityState(user,DISABILITY_FLAG_BLIND,      "Blind")
 	HTML += ShowDisabilityState(user,DISABILITY_FLAG_MUTE,       "Mute")
+	HTML += ShowDisabilityState(user,DISABILITY_FLAG_VEGAN,      "Vegan")
+	HTML += ShowDisabilityState(user,DISABILITY_FLAG_ASTHMA,      "Asthma")
 	/*HTML += ShowDisabilityState(user,DISABILITY_FLAG_COUGHING,   "Coughing")
 	HTML += ShowDisabilityState(user,DISABILITY_FLAG_TOURETTES,   "Tourettes") Still working on it! -Angelite*/
 
@@ -1258,9 +1260,8 @@ NOTE:  The change will take effect AFTER any current recruiting periods."}
 						nanotrasen_relation = new_relation
 
 				if("flavor_text")
-					var/msg = input(usr,"Set the flavor text in your 'examine' verb. This can also be used for OOC notes and preferences!","Flavor Text",html_decode(flavor_text)) as message
-					if(msg)
-						flavor_text = msg
+					flavor_text = input(user,"Set the flavor text in your 'examine' verb. This can also be used for OOC notes and preferences!","Flavor Text",html_decode(flavor_text)) as message
+
 				if("limbs")
 					var/list/limb_input = list(
 						"Left Leg [organ_data[LIMB_LEFT_LEG]]" = LIMB_LEFT_LEG,
@@ -1589,26 +1590,26 @@ NOTE:  The change will take effect AFTER any current recruiting periods."}
 	if(be_random_body)
 		//random_character(gender) - This just selects a random character from the OLD character database.
 		randomize_appearance_for() // Correct.
-	else
-		character.setGender(gender)
-		character.age = age
 
-		character.r_eyes = r_eyes
-		character.g_eyes = g_eyes
-		character.b_eyes = b_eyes
+	character.setGender(gender)
+	character.age = age
 
-		character.r_hair = r_hair
-		character.g_hair = g_hair
-		character.b_hair = b_hair
+	character.r_eyes = r_eyes
+	character.g_eyes = g_eyes
+	character.b_eyes = b_eyes
 
-		character.r_facial = r_facial
-		character.g_facial = g_facial
-		character.b_facial = b_facial
+	character.r_hair = r_hair
+	character.g_hair = g_hair
+	character.b_hair = b_hair
 
-		character.s_tone = s_tone
+	character.r_facial = r_facial
+	character.g_facial = g_facial
+	character.b_facial = b_facial
 
-		character.h_style = h_style
-		character.f_style = f_style
+	character.s_tone = s_tone
+
+	character.h_style = h_style
+	character.f_style = f_style
 
 
 	character.skills = skills
@@ -1721,6 +1722,7 @@ NOTE:  The change will take effect AFTER any current recruiting periods."}
 			<dd>Accept this role for this round and all future rounds. You will not be polled again.</dd>
 		</dl>
 	</fieldset>
+	<h2>TO SAVE YOUR SPECIAL ROLE PREFERENCES, PRESS SUBMIT, NOT SAVE SETUP.</h2>
 
 	<table border=\"0\" padding-left = 20px;>
 		<thead>

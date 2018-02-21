@@ -101,6 +101,13 @@
 	qdel(src)
 	return SPECIAL_ATTACK_FAILED
 
+/obj/item/clothing/glasses/sunglasses/holo/kick_act(mob/living/carbon/human/H)
+	H.visible_message("<span class='danger'>[H] stomps on \the [src], crushing them and making them fade away!</span>", "<span class='danger'>You crush \the [src] under your foot, which takes less effort than you realized as they fade from existence.</span>")
+	playsound(get_turf(src), "shatter", 50, 1)
+
+	qdel(src)
+	return SPECIAL_ATTACK_FAILED
+
 /obj/item/clothing/glasses/sunglasses/purple
 	desc = "Strangely ancient technology used to help provide rudimentary eye cover. Enhanced shielding blocks many flashes, and the colored lenses let you see the world in purple."
 	name = "purple sunglasses"
@@ -115,6 +122,17 @@
 	name = "red star-shaped sunglasses"
 	desc = "Novelty sunglasses with a fancy silver frame and two red-tinted star-shaped lenses. You should probably stomp on them and get a pair of normal ones."
 	icon_state = "sun_star_silver"
+	
+/obj/item/clothing/glasses/sunglasses/red
+	name = "red sunglasses"
+	desc = "Strangely ancient technology used to help provide rudimentary eye cover. Enhanced shielding blocks many flashes, and the colored lenses let you see the world in red."
+	icon_state = "sunred"
+	item_state = "sunred"
+	
+/obj/item/clothing/glasses/sunglasses/security
+	name = "security sunglasses"
+	desc = "Strangely ancient technology used to help provide rudimentary eye cover. Enhanced shielding blocks many flashes. Often worn by budget security officers."
+	icon_state = "sunhud"
 
 /obj/item/clothing/glasses/virussunglasses
 	desc = "Strangely ancient technology used to help provide rudimentary eye cover. Enhanced shielding blocks many flashes."
@@ -149,7 +167,7 @@
 	if(!C.incapacitated())
 		if(src.up)
 			src.up = !src.up
-			eyeprot = 2
+			eyeprot = 3
 			body_parts_covered |= EYES
 			icon_state = initial(icon_state)
 			to_chat(C, "You flip the [src] down to protect your eyes.")
@@ -307,3 +325,19 @@
 	icon_state = "kaminaglasses"
 	item_state = "kaminaglasses"
 	cover_hair = 1
+
+/obj/item/clothing/glasses/contacts
+	name = "contact lenses"
+	desc = "Only nerds wear glasses."
+	icon = 'icons/obj/items.dmi'
+	icon_state = "contact"
+	prescription = 1
+	body_parts_covered = null
+
+/obj/item/clothing/glasses/contacts/polarized
+	name = "polarized contact lenses"
+	desc = "Protects your eyes from bright flashes of light."
+	icon_state = "polarized_contact"
+	darkness_view = -1
+	prescription = 1
+	eyeprot = 1

@@ -38,7 +38,7 @@
 				return
 		if(3.0)
 			if (prob(25))
-				src.density = 0
+				setDensity(FALSE)
 		else
 	return
 
@@ -53,7 +53,7 @@
 	if (M_HULK in usr.mutations)
 		to_chat(usr, text("<span class='notice'>You destroy the table.</span>"))
 		visible_message("<span class='warning'>[usr] destroys the operating table!</span>")
-		src.density = 0
+		setDensity(FALSE)
 		qdel(src)
 
 /obj/machinery/optable/Cross(atom/movable/mover, turf/target, height=1.5, air_group = 0)
@@ -85,7 +85,7 @@
 			return
 		if(istype(O, /mob/living/simple_animal) || istype(O, /mob/living/silicon)) //animals and robutts dont fit
 			return
-		if(!ishuman(user) && !isrobot(user) && !ismartian(user)) //No ghosts or mice putting people into the sleeper
+		if(!ishigherbeing(user) && !isrobot(user)) //No ghosts or mice putting people into the sleeper
 			return
 		if(user.loc==null) // just in case someone manages to get a closet into the blue light dimension, as unlikely as that seems
 			return

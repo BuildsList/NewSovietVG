@@ -96,7 +96,11 @@ But you can call procs that are of type /mob/living/carbon/human/proc/ for that 
 			log_admin("[key_name(src)] called [procname]() with [lst.len ? "the arguments [list2params(lst)]":"no arguments"].")
 			returnval = call(procname)(arglist(lst)) // Pass the lst as an argument list to the proc
 
-		to_chat(usr, "<font color='blue'>[procname] returned: [returnval ? returnval : "null"]</font>")
+		if(isnull(returnval))
+			returnval = "null"
+		else if(returnval == "")
+			returnval = "\"\" (empty string)"
+		to_chat(usr, "<font color='blue'>[procname] returned: [returnval]</font>")
 		feedback_add_details("admin_verb","APC") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
 
 /client/proc/callatomproc(var/datum/target as anything)
@@ -134,7 +138,11 @@ But you can call procs that are of type /mob/living/carbon/human/proc/ for that 
 		log_admin("[key_name(src)] called [target]'s [procname]() with [lst.len ? "the arguments [list2params(lst)]":"no arguments"].")
 		returnval = call(target,procname)(arglist(lst)) // Pass the lst as an argument list to the proc
 
-		to_chat(usr, "<font color='blue'>[procname] returned: [returnval ? returnval : "null"]</font>")
+		if(isnull(returnval))
+			returnval = "null"
+		else if(returnval == "")
+			returnval = "\"\" (empty string)"
+		to_chat(usr, "<font color='blue'>[procname] returned: [returnval]</font>")
 		feedback_add_details("admin_verb","APC") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
 
 
@@ -1303,3 +1311,40 @@ client/proc/check_convertables()
 	feedback_add_details("admin_verb","ESP")
 	return
 
+/client/proc/start_line_profiling()
+	set category = "Profile"
+	set name = "Start line profiling"
+	set desc = "Starts tracking line by line profiling for code lines that support it"
+
+	PROFILE_START
+
+	message_admins("<span class='adminnotice'>[key_name_admin(src)] started line by line profiling.</span>")
+	feedback_add_details("admin_verb","Start line profiling")
+	log_admin("[key_name(src)] started line by line profiling.")
+
+/client/proc/stop_line_profiling()
+	set category = "Profile"
+	set name = "Stop line profiling"
+	set desc = "Stops tracking line by line profiling for code lines that support it"
+
+	PROFILE_STOP
+
+	message_admins("<span class='adminnotice'>[key_name_admin(src)] stopped line by line profiling.</span>")
+	feedback_add_details("admin_verb","Stop line profiling")
+	log_admin("[key_name(src)] stopped line by line profiling.")
+
+/client/proc/show_line_profiling()
+	set category = "Profile"
+	set name = "Show line profiling"
+	set desc = "Shows tracked profiling info from code lines that support it"
+
+	var/sortlist = list(
+		"Avg time"		=	/proc/cmp_profile_avg_time_dsc,
+		"Total Time"	=	/proc/cmp_profile_time_dsc,
+		"Call Count"	=	/proc/cmp_profile_count_dsc
+	)
+	var/sort = input(src, "Sort type?", "Sort Type", "Avg time") as null|anything in sortlist
+	if (!sort)
+		return
+	sort = sortlist[sort]
+	profile_show(src, sort)

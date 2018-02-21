@@ -85,9 +85,10 @@ var/global/num_vending_terminals = 1
 
 	var/machine_id = "#"
 
-	machine_flags = SCREWTOGGLE | WRENCHMOVE | FIXED2WORK | CROWDESTROY | EJECTNOTDEL | PURCHASER | WIREJACK | SECUREDPANEL
+	machine_flags = SCREWTOGGLE | WRENCHMOVE | FIXED2WORK | CROWDESTROY | EJECTNOTDEL | PURCHASER | WIREJACK
 
-	var/account_first_linked = 0
+	var/account_first_linked = 1
+	var/is_being_filled = FALSE // `in_use` from /obj is already used for tracking users of this machine's UI
 
 /obj/machinery/vending/cultify()
 	new /obj/structure/cult/forge(loc)
@@ -127,6 +128,7 @@ var/global/num_vending_terminals = 1
 
 	if(ticker)
 		initialize()
+		link_to_account()
 
 	return
 
@@ -137,6 +139,9 @@ var/global/num_vending_terminals = 1
 	build_inventory(contraband, 1)
 	build_inventory(premium, 0, 1)
 	build_inventory(vouched, 0, 0, 1)
+
+/obj/machinery/vending/proc/link_to_account()
+	linked_account = department_accounts["Cargo"]
 
 /obj/machinery/vending/RefreshParts()
 	var/manipcount = 0
@@ -179,8 +184,16 @@ var/global/num_vending_terminals = 1
 			to_chat(user, "<span class='warning'>You need to anchor the vending machine before you can refill it.</span>")
 			return
 		if(!pack)
+			if(is_being_filled)
+				to_chat(user, "<span class='warning'>\The [src] is already in use!</span>")
+				return
+			if(P.in_use)
+				to_chat(user, "<span class='warning'>\The [P] is already in use!</span>")
+				return
+			is_being_filled = TRUE
+			P.in_use = TRUE
 			to_chat(user, "<span class='notice'>You start filling the vending machine with the recharge pack's materials.</span>")
-			if(do_after(user,src,30))
+			if(do_after_many(user, list(src, P), 3 SECONDS))
 				var/obj/machinery/vending/newmachine = new P.targetvendomat(loc)
 				to_chat(user, "<span class='notice'>[bicon(newmachine)] You finish filling the vending machine, and use the stickers inside the pack to decorate the frame.</span>")
 				playsound(newmachine, 'sound/machines/hiss.ogg', 50, 0, 0)
@@ -204,16 +217,31 @@ var/global/num_vending_terminals = 1
 				component_parts = 0
 				qdel(coinbox)
 				qdel(src)
+			else
+				is_being_filled = FALSE
+				P.in_use = FALSE
 		else
 			if(istype(P,pack))
+				if(is_being_filled)
+					to_chat(user, "<span class='warning'>\The [src] is already in use!</span>")
+					return
+				if(P.in_use)
+					to_chat(user, "<span class='warning'>\The [P] is already in use!</span>")
+					return
+				is_being_filled = TRUE
+				P.in_use = TRUE
 				to_chat(user, "<span class='notice'>You start refilling the vending machine with the recharge pack's materials.</span>")
-				if(do_after(user, src, 30))
+				if(do_after_many(user, list(src, P), 3 SECONDS))
 					to_chat(user, "<span class='notice'>[bicon(src)] You finish refilling the vending machine.</span>")
 					playsound(src, 'sound/machines/hiss.ogg', 50, 0, 0)
 					if(check_for_custom_vendor())
 						custom_refill(P, user)
 					else
 						normal_refill(P, user)
+				else
+					P.in_use = FALSE // Only update this if `do_after_many` failed, as P gets deleted
+				is_being_filled = FALSE
+
 			else
 				to_chat(user, "<span class='warning'>This recharge pack isn't meant for this kind of vending machines.</span>")
 
@@ -341,11 +369,12 @@ var/global/num_vending_terminals = 1
 //		to_chat(world, "Added: [R.product_name]] - [R.amount] - [R.product_path]")
 
 /obj/machinery/vending/emag(mob/user)
-	if(!emagged)
+	if(!emagged || !extended_inventory || scan_id)
 		emagged = 1
-		to_chat(user, "You short out the product lock on \the [src]")
+		extended_inventory = 1
+		scan_id = 0
 		return 1
-	return -1
+	return 0 //Fucking gross
 
 /obj/machinery/vending/npc_tamper_act(mob/living/L)
 	if(!panel_open)
@@ -457,7 +486,19 @@ var/global/num_vending_terminals = 1
 		if(user.drop_item(W, src))
 			add_item(W)
 			src.updateUsrDialog()
+	else if(istype(W, /obj/item/weapon/card/emag))
+		visible_message("<span class='info'>[usr] swipes a card through [src].</span>")
+		to_chat(user, "<span class='notice'>You swipe \the [W] through [src]</span>")
+		if (emag())
+			to_chat(user, "<span class='info'>[src] responds with a soft beep.</span>")
+		else
+			to_chat(user, "<span class='info'>Nothing happens.</span>")
+
 	else if(istype(W, /obj/item/weapon/card))
+		if(currently_vending) //We're trying to pay, not set the account
+			connect_account(user, W)
+			src.updateUsrDialog()
+			return
 		//attempt to connect to a new db, and if that doesn't work then fail
 		if(linked_account)
 			if(account_first_linked)
@@ -860,6 +901,8 @@ var/global/num_vending_terminals = 1
 		var/obj/item/weapon/card/card = usr.get_id_card()
 		if(card)
 			connect_account(usr, card)
+		else
+			to_chat(usr, "<span class='warning'>Please present a valid ID.</span>")
 		src.updateUsrDialog()
 		return
 
@@ -1314,11 +1357,11 @@ var/global/num_vending_terminals = 1
 		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/thirteenloko = 5,
 		)
 	prices = list(
-		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/cola = 20,
-		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/space_mountain_wind = 20,
-		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/dr_gibb = 20,
-		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/starkist = 20,
-		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/space_up = 20,
+		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/cola = 10,
+		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/space_mountain_wind = 10,
+		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/dr_gibb = 10,
+		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/starkist = 10,
+		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/space_up = 10,
 		)
 
 	pack = /obj/structure/vendomatpack/cola
@@ -1351,13 +1394,13 @@ var/global/num_vending_terminals = 1
 		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/greyshitvodka = 2,
 		)
 	prices = list(
-		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/blebweiser = 50,
-		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/bluespaceribbon = 40,
-		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/codeone = 50,
-		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/gibness = 50,
-		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/orchardtides = 50,
-		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/sleimiken = 50,
-		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/strongebow = 50,
+		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/blebweiser = 15,
+		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/bluespaceribbon = 15,
+		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/codeone = 15,
+		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/gibness = 15,
+		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/orchardtides = 15,
+		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/sleimiken = 15,
+		/obj/item/weapon/reagent_containers/food/drinks/soda_cans/strongebow = 15,
 		)
 
 	pack = /obj/structure/vendomatpack/offlicence
@@ -1480,6 +1523,11 @@ var/global/num_vending_terminals = 1
 		)
 
 	pack = /obj/structure/vendomatpack/medical
+
+/obj/machinery/vending/medical/New()
+	..()
+	if(map.nameShort == "deff")
+		icon = 'maps/defficiency/medbay.dmi'
 
 //This one's from bay12
 /obj/machinery/vending/plasmaresearch
@@ -1758,14 +1806,16 @@ var/global/num_vending_terminals = 1
 		/obj/item/device/flash = 5,
 		/obj/item/weapon/reagent_containers/food/snacks/donut/normal = 12,
 		/obj/item/weapon/storage/box/evidence = 6,
-		/obj/item/weapon/legcuffs/bolas = 2,
+		/obj/item/weapon/legcuffs/bolas = 8,
 		)
 	contraband = list(
-		/obj/item/clothing/glasses/sunglasses = 2,
+		/obj/item/clothing/glasses/sunglasses/security = 2,
 		/obj/item/weapon/storage/fancy/donut_box = 2,
 		)
 	premium = list(
-		/obj/item/clothing/head/helmet/siren = 2
+		/obj/item/clothing/head/helmet/siren = 2,
+		/obj/item/clothing/head/helmet/police = 2,
+		/obj/item/clothing/under/police = 2,
 		)
 	vouched = list(
 		/obj/item/ammo_storage/magazine/m380auto = 10,
@@ -2002,6 +2052,7 @@ var/global/num_vending_terminals = 1
 		/obj/item/weapon/reagent_containers/food/drinks/drinkingglass = 8,
 		/obj/item/clothing/suit/chef/classic = 2,
 		/obj/item/trash/bowl = 20,
+		/obj/item/trash/plate = 20,
 		/obj/item/weapon/reagent_containers/food/condiment/peppermill = 5,
 		/obj/item/weapon/reagent_containers/food/condiment/saltshaker	= 5,
 		/obj/item/weapon/reagent_containers/food/condiment/vinegar = 5,
@@ -2100,7 +2151,6 @@ var/global/num_vending_terminals = 1
 		/obj/item/device/holomap = 2,
 		/obj/item/weapon/reagent_containers/glass/bottle/sacid = 3,
 		/obj/item/blueprints/construction_permit = 4, // permits
-		/obj/item/vaporizer = 2,
 		)
 	contraband = list(
 		/obj/item/weapon/cell/potato = 3,
@@ -2399,6 +2449,7 @@ var/global/num_vending_terminals = 1
 		/obj/item/clothing/suit/wizrobe/magician/fake = 3,
 		/obj/item/clothing/head/wizard/magician = 3,
 		/obj/item/clothing/suit/sakura_kimono = 3,
+		/obj/item/clothing/gloves/white = 3,
 		)
 
 	pack = /obj/structure/vendomatpack/autodrobe
@@ -2431,6 +2482,7 @@ var/global/num_vending_terminals = 1
 		/obj/item/clothing/head/soft/purple = 10,
 		/obj/item/clothing/head/soft/red = 10,
 		/obj/item/clothing/head/soft/yellow = 10,
+		/obj/item/clothing/head/soft/black = 10,
 		)
 	contraband = list(
 		/obj/item/clothing/head/bearpelt = 5,
@@ -2573,8 +2625,9 @@ var/global/num_vending_terminals = 1
 
 /obj/machinery/vending/nazivend/emag(mob/user)
 	if(!emagged)
-		to_chat(user, "<span class='warning'>As you slide the card into the machine, you hear something unlocking inside. The machine emits an evil glow.</span>")
-		message_admins("[key_name_admin(user)] unlocked a Nazivend's DANGERMODE!")
+		if(user)
+			to_chat(user, "<span class='warning'>As you slide the card into the machine, you hear something unlocking inside. The machine emits an evil glow.</span>")
+			message_admins("[key_name_admin(user)] unlocked a Nazivend's DANGERMODE!")
 		contraband[/obj/item/clothing/head/helmet/space/rig/nazi] = 3
 		contraband[/obj/item/clothing/suit/space/rig/nazi] = 3
 		contraband[/obj/item/weapon/gun/energy/plasma/MP40k] = 4
@@ -2654,8 +2707,9 @@ var/global/num_vending_terminals = 1
 
 /obj/machinery/vending/sovietvend/emag(mob/user)
 	if(!emagged)
-		to_chat(user, "<span class='warning'>As you slide the card into the machine, you hear something unlocking inside. The machine emits an evil glow.</span>")
-		message_admins("[key_name_admin(user)] unlocked a Sovietvend's DANGERMODE!")
+		if(user)
+			to_chat(user, "<span class='warning'>As you slide the card into the machine, you hear something unlocking inside. The machine emits an evil glow.</span>")
+			message_admins("[key_name_admin(user)] unlocked a Sovietvend's DANGERMODE!")
 		contraband[/obj/item/clothing/head/helmet/space/rig/soviet] = 3
 		contraband[/obj/item/clothing/suit/space/rig/soviet] = 3
 		contraband[/obj/item/weapon/gun/energy/laser/LaserAK] = 4
@@ -2852,7 +2906,7 @@ var/global/num_vending_terminals = 1
 		"Profits."
 	)
 	product_ads = list(
-		"When you charge a customer $100, and he pays you by mistake $200, you have an ethical dilemma — should you tell your partner?"
+		"When you charge a customer $100, and he pays you by mistake $200, you have an ethical dilemma: should you tell your partner?"
 	)
 	vend_reply = "Money money money!"
 	icon_state = "voxseed"
@@ -2860,35 +2914,39 @@ var/global/num_vending_terminals = 1
 		/obj/item/weapon/storage/fancy/donut_box = 2,
 		/obj/item/clothing/suit/storage/trader = 3,
 		/obj/item/device/pda/trader = 3,
-		/obj/item/weapon/capsule = 60
+		/obj/item/weapon/capsule = 60,
+		/obj/item/vaporizer = 1,
 		)
 	prices = list(
 		/obj/item/clothing/suit/storage/trader = 100,
 		/obj/item/device/pda/trader = 100,
-		/obj/item/weapon/capsule = 10
+		/obj/item/weapon/capsule = 10,
+		/obj/item/vaporizer = 100
 		)
-
-/obj/machinery/vending/trader/New()
-	..()
 
 	accepted_coins = list(/obj/item/weapon/coin/trader)
 
 	premium = list(
-		/obj/item/weapon/storage/trader_marauder,
-		//obj/item/weapon/storage/backpack/holding, //Players did exactly what you would expect and bought them for their own use.  Keep in mind that an obj should be good but not so good they want it for themselves
+		/obj/item/weapon/storage/trader_chemistry,
+		/obj/structure/closet/secure_closet/wonderful,
+		/obj/item/weapon/disk/shuttle_coords/vault/mecha_graveyard,
 		/obj/item/weapon/reagent_containers/glass/beaker/bluespace,
 		/obj/item/weapon/storage/bluespace_crystal,
-		//obj/item/clothing/shoes/magboots/elite,
 		/obj/item/weapon/reagent_containers/food/snacks/borer_egg,
-		/obj/item/weapon/reagent_containers/glass/bottle/peridaxon,
-		/obj/item/weapon/reagent_containers/glass/bottle/rezadone,
-		/obj/item/weapon/reagent_containers/glass/bottle/nanobotssmall,
 		/obj/item/clothing/shoes/clown_shoes/advanced,
+		/obj/item/fish_eggs/seadevil,
 		)
 
-	for(var/random_items = 1 to premium.len - 4)
+/obj/machinery/vending/trader/New()
+
+	premium.Add(pick(existing_typesof(/obj/item/borg/upgrade) - /obj/item/borg/upgrade/magnetic_gripper)) //A random borg upgrade minus the magnetic gripper. Time to jew the silicons!
+
+	for(var/random_items = 1 to premium.len - 5)
 		premium.Remove(pick(premium))
-	src.initialize()
+
+	if(premium.Find(/obj/item/weapon/disk/shuttle_coords/vault/mecha_graveyard))
+		load_dungeon(/datum/map_element/dungeon/mecha_graveyard)
+	..()
 
 /obj/machinery/vending/barber
 	name = "\improper BarberVend"
@@ -3016,9 +3074,14 @@ var/global/num_vending_terminals = 1
 	//vend_reply = "Insert another joke here"
 	//product_ads = "Another joke here"
 	//product_slogans = "Jokes"
+	account_first_linked = 0
+	machine_flags = SCREWTOGGLE | WRENCHMOVE | FIXED2WORK | CROWDESTROY | EJECTNOTDEL | PURCHASER | WIREJACK | SECUREDPANEL
 	products = list()
 
 	pack = /obj/structure/vendomatpack/custom
+
+/obj/machinery/vending/sale/link_to_account()
+	return
 
 /obj/machinery/vending/toggleSecuredPanelOpen(var/obj/toggleitem, var/mob/user)
 	if(!account_first_linked)
@@ -3094,15 +3157,3 @@ var/global/num_vending_terminals = 1
 		)
 
 	pack = /obj/structure/vendomatpack/mining
-
-//Note : Snowflake, but I don't care. Rework the fucking economy
-/obj/machinery/vending/mining/New()
-	..()
-
-	if(ticker)
-		initialize()
-
-/obj/machinery/vending/mining/initialize()
-	..()
-
-	linked_account = department_accounts["Cargo"]

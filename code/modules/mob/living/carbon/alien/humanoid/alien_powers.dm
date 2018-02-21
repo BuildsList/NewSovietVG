@@ -21,6 +21,7 @@ Doesn't work on other aliens/AI.*/
 /spell/aoe_turf/conjure/alienweeds
 	name = "Plant Weeds"
 	desc = "Plants some alien weeds"
+	user_type = USER_TYPE_XENOMORPH
 	panel = "Alien"
 	hud_state = "alien_weeds"
 	override_base = "alien"
@@ -51,6 +52,7 @@ Doesn't work on other aliens/AI.*/
 /spell/targeted/alienwhisper
 	name = "Whisper"
 	desc = "Whisper to someone"
+	user_type = USER_TYPE_XENOMORPH
 	panel = "Alien"
 	hud_state = "alien_whisper"
 	override_base = "alien"
@@ -98,6 +100,7 @@ Doesn't work on other aliens/AI.*/
 /spell/targeted/alientransferplasma
 	name = "Transfer Plasma"
 	desc = "Transfer your plasma to another alien"
+	user_type = USER_TYPE_XENOMORPH
 	panel = "Alien"
 	hud_state = "alien_transfer"
 	override_base = "alien"
@@ -127,6 +130,7 @@ Doesn't work on other aliens/AI.*/
 /spell/targeted/projectile/alienneurotoxin
 	name = "Spit Neurotoxin"
 	desc = "Spits neurotoxin at someone, paralyzing them for a short time if they are not wearing protective gear."
+	user_type = USER_TYPE_XENOMORPH
 	panel = "Alien"
 	hud_state = "alien_neurotoxin"
 	override_base = "alien"
@@ -145,7 +149,7 @@ Doesn't work on other aliens/AI.*/
 	proj_step_delay = 0.2
 
 /spell/targeted/projectile/alienneurotoxin/is_valid_target(var/target, mob/user)
-	if(!(spell_flags & INCLUDEUSER) && target == usr)
+	if(!(spell_flags & INCLUDEUSER) && target == user)
 		return FALSE
 	if(get_dist(usr, target) > range)
 		return FALSE
@@ -179,6 +183,7 @@ Doesn't work on other aliens/AI.*/
 /spell/aoe_turf/conjure/choice/alienresin
 	name = "Secrete Resin"
 	desc = "Secrete tough malleable resin."
+	user_type = USER_TYPE_XENOMORPH
 	panel = "Alien"
 	hud_state = "alien_resin"
 	override_base = "alien"
@@ -194,6 +199,7 @@ Doesn't work on other aliens/AI.*/
 /spell/alienacid
 	name = "Corrosive Acid"
 	desc = "Drench an object in acid, destroying it over time."
+	user_type = USER_TYPE_XENOMORPH
 	panel = "Alien"
 	hud_state = "alien_acid"
 	override_base = "alien"
@@ -239,13 +245,14 @@ Doesn't work on other aliens/AI.*/
 /proc/acidify(atom/O, mob/user)
 	if(O.acidable())
 		new /obj/effect/alien/acid(get_turf(O), O)
-		user.visible_message("<span class='alien'>\The [usr] vomits globs of vile stuff all over [O]. It begins to sizzle and melt under the bubbling mess of acid!</span>")
+		user.visible_message("<span class='alien'>\The [user] vomits globs of vile stuff all over [O]. It begins to sizzle and melt under the bubbling mess of acid!</span>")
 	else
 		to_chat(user, "<span class='alien'>You cannot dissolve this object.</span>")
 
 /spell/aoe_turf/alienregurgitate
 	name = "Regurgitate"
 	desc = "Empties the contents of your stomach."
+	user_type = USER_TYPE_XENOMORPH
 	panel = "Alien"
 	hud_state = "alien_regurgitate"
 	override_base = "alien"
@@ -258,7 +265,7 @@ Doesn't work on other aliens/AI.*/
 /spell/aoe_turf/alienregurgitate/cast(list/targets, mob/user)
 	var/mob/living/carbon/alien/humanoid/alien = user
 	alien.drop_stomach_contents()
-	user.visible_message("<span class='alien'>\The [usr] hurls out the contents of their stomach!</span>")
+	user.visible_message("<span class='alien'>\The [user] hurls out the contents of their stomach!</span>")
 
 ///////////////////////////
 // QUEEN SPECIFIC SPELLS //
@@ -266,6 +273,7 @@ Doesn't work on other aliens/AI.*/
 /spell/aoe_turf/conjure/alienegg
 	name = "Lay Egg"
 	desc = "Lay an egg to produce huggers to impregnate prey with."
+	user_type = USER_TYPE_XENOMORPH
 	panel = "Alien"
 	hud_state = "alien_egg"
 	override_base = "alien"
@@ -282,7 +290,7 @@ a
 /spell/aoe_turf/conjure/alienegg/cast(list/targets, mob/user)
 	. = ..()
 	if(!.) //Returning 1 if we failed to cast
-		stat_collection.xeno.eggs_laid++
+		stat_collection.xeno_eggs_laid++
 
 ///////////////////////////////////
 ////////// DRONE BROS /////////////
@@ -292,6 +300,7 @@ a
 /spell/aoe_turf/evolve
 	name = "Evolve"
 	panel = "Alien"
+	user_type = USER_TYPE_XENOMORPH
 	hud_state = "alien_evolve"
 	override_base = "alien"
 
@@ -318,7 +327,7 @@ a
 	return ..()
 
 /spell/aoe_turf/evolve/drone/spell_do_after(var/mob/user as mob, delay as num, var/numticks = 5)
-	user.visible_message("<span class='alien'>[src] begins to violently twist and contort!</span>", "<span class='alien'>You begin to evolve, stand still for a few moments</span>")
+	user.visible_message("<span class='alien'>[user] begins to violently twist and contort!</span>", "<span class='alien'>You begin to evolve, stand still for a few moments</span>")
 	return ..()
 
 /spell/aoe_turf/evolve/drone/cast(list/targets, mob/living/carbon/user)
@@ -337,6 +346,7 @@ a
 
 /spell/aoe_turf/evolve/larva
 	desc = "Evolve into a fully grown Alien."
+	user_type = USER_TYPE_XENOMORPH
 	insufficient_holder_msg = "<span class='alien'>You are not fully grown yet.</span>"
 
 	holder_var_type = "growth"
@@ -385,6 +395,7 @@ a
 /spell/aoe_turf/alien_hide
 	name = "Hide"
 	desc = "Allows you to hide beneath tables or items laid on the ground. Toggle."
+	user_type = USER_TYPE_XENOMORPH
 	panel = "Alien"
 	hud_state = "alien_hide"
 	override_base = "alien"

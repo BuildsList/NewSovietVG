@@ -364,10 +364,6 @@
 		var/obj/item/weapon/storage/fancy/F = src
 		F.update_icon(1)
 
-	for(var/mob/M in range(1, get_turf(src)))
-		if (M.s_active == src)
-			if (M.client)
-				M.client.screen -= W
 
 	if(new_location)
 		var/mob/M
@@ -376,7 +372,8 @@
 			W.dropped(M)
 		if(ismob(new_location))
 			M = new_location
-			M.put_in_active_hand(W)
+			if(!M.put_in_active_hand(W))
+				return 0
 		else
 			if(istype(new_location, /obj/item/weapon/storage))
 				var/obj/item/weapon/storage/A = new_location
@@ -385,6 +382,11 @@
 				W.forceMove(new_location)
 	else
 		W.forceMove(get_turf(src))
+
+	for(var/mob/M in range(1, get_turf(src)))
+		if (M.s_active == src)
+			if (M.client)
+				M.client.screen -= W
 
 	if(usr)
 		src.orient2hud(usr)
@@ -507,7 +509,7 @@
 	set name = "Empty Contents"
 	set category = "Object"
 
-	if((!ishuman(usr) && (src.loc != usr)) || usr.isUnconscious() || usr.restrained())
+	if((!ishigherbeing(usr) && (src.loc != usr)) || usr.isUnconscious() || usr.restrained())
 		return
 
 	var/turf/T = get_turf(src)
@@ -556,7 +558,7 @@
 
 	//Clicking on itself will empty it, if it has the verb to do that.
 	if(user.get_active_hand() == src)
-		if(src.verbs.Find(/obj/item/weapon/storage/verb/quick_empty))
+		if(src.verbs.Find(/obj/item/weapon/storage/verb/quick_empty) && contents.len)
 			src.quick_empty()
 			return
 
@@ -577,7 +579,8 @@
 		return
 	// Now make the cardboard
 	to_chat(user, "<span class='notice'>You fold \the [src] flat.</span>")
-	new src.foldable(get_turf(src),foldable_amount)
+	var/folded = new src.foldable(get_turf(src),foldable_amount)
+	transfer_fingerprints_to(folded)
 	qdel(src)
 //BubbleWrap END
 /obj/item/weapon/storage/proc/can_see_contents()
@@ -596,10 +599,12 @@
 
 /obj/item/weapon/storage/Destroy()
 	close_all()
-	returnToPool(boxes)
-	returnToPool(closer)
-	boxes = null
-	closer = null
+	if(boxes)
+		returnToPool(boxes)
+		boxes = null
+	if(closer)
+		returnToPool(closer)
+		closer = null
 	for(var/atom/movable/AM in contents)
 		qdel(AM)
 	contents = null

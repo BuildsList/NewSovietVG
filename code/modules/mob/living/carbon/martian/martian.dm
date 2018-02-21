@@ -31,11 +31,15 @@
 
 	unslippable = TRUE
 	size = SIZE_BIG
+	status_flags = CANSTUN|CANKNOCKDOWN|CANPARALYSE|CANPUSH
+	mob_bump_flag = HUMAN
+	mob_push_flags = ALLMOBS
+	mob_swap_flags = ALLMOBS
+
 
 	fire_dmi = 'icons/mob/OnFire.dmi'
 	fire_sprite = "Standing"
 	plane = HUMAN_PLANE
-
 	maxHealth = 150
 	health = 150
 
@@ -52,6 +56,8 @@
 	create_reagents(200)
 	name = pick("martian","scootaloo","squid","rootmarian","phoronitian","sepiida","octopodiforme",\
 	"bolitaenides","belemnites","astrocanthoteuthis","octodad","ocotillo","kalamarian")
+	add_language(LANGUAGE_MARTIAN)
+	default_language = all_languages[LANGUAGE_MARTIAN]
 	..()
 
 /mob/living/carbon/martian/Destroy()
@@ -68,8 +74,9 @@
 
 /mob/living/carbon/martian/eyecheck()
 	var/obj/item/clothing/head/headwear = src.head
-
-	var/protection = headwear.eyeprot
+	var/protection
+	if(headwear)
+		protection = headwear.eyeprot
 
 	return Clamp(protection, -2, 2)
 
@@ -95,16 +102,44 @@
 	else
 		health = maxHealth - getOxyLoss() - getFireLoss() - getBruteLoss() - getCloneLoss()
 
-/mob/living/carbon/martian/Stat()
-	if(head && istype(head, /obj/item/clothing/head/helmet/space/martian))
-		var/obj/item/clothing/head/helmet/space/martian/fishbowl = head
-		if(fishbowl.tank && istype(fishbowl.tank, /obj/item/weapon/tank))
-			var/obj/item/weapon/tank/internal = fishbowl.tank
-			stat("Internal Atmosphere Info", internal.name)
-			stat("Tank Pressure", internal.air_contents.return_pressure())
-			stat("Distribution Pressure", internal.distribute_pressure)
 
+/mob/living/carbon/martian/ex_act(severity)
+	if(flags & INVULNERABLE)
+		return
+
+	flash_eyes(visual = 1)
+
+	switch(severity)
+		if(1.0)
+			adjustBruteLoss(100)
+			adjustFireLoss(100)
+			if(prob(50))
+				gib()
+				return
+		if(2.0)
+			adjustBruteLoss(60)
+			adjustFireLoss(60)
+		if(3.0)
+			adjustBruteLoss(30)
+
+	apply_effect(severity*4, WEAKEN)
+
+
+	updatehealth()
 
 /mob/living/carbon/martian/Login()
 	..()
 	update_hud()
+
+/mob/living/carbon/martian/Stat()
+	..()
+	if(statpanel("Status"))
+		stat(null, "Intent: [a_intent]")
+		stat(null, "Move Mode: [m_intent]")
+		if(head && istype(head, /obj/item/clothing/head/helmet/space/martian))
+			var/obj/item/clothing/head/helmet/space/martian/fishbowl = head
+			if(fishbowl.tank && istype(fishbowl.tank, /obj/item/weapon/tank))
+				var/obj/item/weapon/tank/internal = fishbowl.tank
+				stat("Internal Atmosphere Info", internal.name)
+				stat("Tank Pressure", internal.air_contents.return_pressure())
+				stat("Distribution Pressure", internal.distribute_pressure)

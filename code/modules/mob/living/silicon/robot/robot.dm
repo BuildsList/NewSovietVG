@@ -7,6 +7,7 @@
 	health = 300
 	flashed = 0
 
+	var/list/hud_list[2]
 	var/sight_mode = 0
 	var/custom_name = ""
 	var/namepick_uses = 1 // /vg/: Allows AI to disable namepick().
@@ -83,6 +84,10 @@
 	var/lawcheck[1]
 	var/ioncheck[1]
 
+//Photography
+	var/obj/item/device/camera/silicon/aicamera = null
+	var/toner = CYBORG_STARTING_TONER
+	var/tonermax = CYBORG_MAX_TONER
 
 /mob/living/silicon/robot/New(loc,var/syndie = 0,var/unfinished = 0,var/startup_sound='sound/voice/liveagain.ogg')
 	if(isMoMMI(src))
@@ -120,6 +125,7 @@
 	station_holomap = new(src)
 
 	radio = new /obj/item/device/radio/borg(src)
+	aicamera = new/obj/item/device/camera/silicon/robot_camera(src)
 	if(!scrambledcodes && !camera)
 		camera = new /obj/machinery/camera(src)
 		camera.c_tag = real_name
@@ -139,6 +145,9 @@
 		cell = new /obj/item/weapon/cell(src)
 		cell.maxcharge = 7500
 		cell.charge = 7500
+
+	hud_list[DIAG_HEALTH_HUD] = image('icons/mob/hud.dmi', src, "huddiagmax")
+	hud_list[DIAG_CELL_HUD] = image('icons/mob/hud.dmi', src, "hudbattmax")
 
 	..()
 
@@ -290,7 +299,7 @@
 
 		if("Supply")
 			module = new /obj/item/weapon/robot_module/miner(src)
-			radio.insert_key(new/obj/item/device/encryptionkey/headset_cargo(radio))
+			radio.insert_key(new/obj/item/device/encryptionkey/headset_mining(radio))
 			if(camera && CAMERANET_ROBOTS in camera.network)
 				camera.network.Add(CAMERANET_MINE)
 			module_sprites["Basic"] = "Miner_old"
@@ -1012,7 +1021,14 @@
 				updateicon()
 			else
 				to_chat(user, "<span class='warning'>Access denied.</span>")
-
+	else if(istype(W, /obj/item/device/toner))
+		if(toner >= tonermax)
+			to_chat(user, "The toner level of [src] is at its highest level possible")
+		else
+			if(user.drop_item())
+				toner = CYBORG_MAX_TONER
+				qdel(W)
+				to_chat(user, "You fill the toner level of [src] to its max capacity")
 	else if(istype(W, /obj/item/borg/upgrade/))
 		var/obj/item/borg/upgrade/U = W
 		if (U.attempt_action(src,user))
@@ -1407,7 +1423,7 @@
 	radio.interact(src)//Just use the radio's Topic() instead of bullshit special-snowflake code
 
 
-/mob/living/silicon/robot/Move(a, b, flag)
+/mob/living/silicon/robot/Move(NewLoc, Dir = 0, step_x = 0, step_y = 0, glide_size_override = 0)
 
 	. = ..()
 
@@ -1418,7 +1434,7 @@
 				tile.clean_blood()
 				for(var/A in tile)
 					if(istype(A, /obj/effect))
-						if(istype(A, /obj/effect/rune) || istype(A, /obj/effect/decal/cleanable) || istype(A, /obj/effect/overlay))
+						if(iscleanaway(A))
 							qdel(A)
 					else if(istype(A, /obj/item))
 						var/obj/item/cleaned_item = A
@@ -1590,3 +1606,14 @@
 			client.screen -= A
 	module.remove_languages(src)
 	module = null
+
+/mob/living/silicon/robot/hasHUD(var/hud_kind)
+	switch(hud_kind)
+		if(HUD_MEDICAL)
+			return sensor_mode == 2
+		if(HUD_SECURITY)
+			return sensor_mode == 1
+	return FALSE
+
+/mob/living/silicon/robot/identification_string()
+	return "[name] ([modtype] [braintype])"

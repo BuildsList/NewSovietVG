@@ -122,7 +122,7 @@
 		src.ear_damage -= 0.05
 		src.ear_damage = max(src.ear_damage, 0)
 
-	src.density = !( src.lying )
+	src.setDensity(!(src.lying))
 
 	if ((src.sdisabilities & BLIND))
 		src.blinded = 1
@@ -249,6 +249,8 @@
 		bodytemp.icon_state = "temp[temp_alert]"
 	if(pressure)
 		pressure.icon_state = "pressure[pressure_alert]"
+	if(album_icon)
+		album_icon.icon_state = "album[connected_ai ? "1":""]"
 
 	update_pull_icon()
 //Oxygen indicator exists, but unused

@@ -11,6 +11,8 @@
 
 #define ismartian(A) istype(A, /mob/living/carbon/martian)
 
+#define ishigherbeing(A) (ishuman(A) || ismartian(A))
+
 #define isvox(A) (ishuman(A) && A.species && istype(A.species, /datum/species/vox))
 
 #define isdiona(A) (ishuman(A) && A.species && istype(A.species, /datum/species/diona))
@@ -157,6 +159,10 @@
 
 #define iswindow(A) (istype(A, /obj/structure/window))
 
+#define isgripper(G) (istype(G, /obj/item/weapon/gripper))
+
+#define isAPC(A) istype(A, /obj/machinery/power/apc)
+
 #define isimage(A) (istype(A, /image))
 
 #define isdatum(A) (istype(A, /datum))
@@ -169,7 +175,17 @@
 
 #define isrealobject(A) (istype(A, /obj/item) || istype(A, /obj/structure) || istype(A, /obj/machinery) || istype(A, /obj/mecha))
 
+#define iscleanaway(A) (istype(A,/obj/effect/decal/cleanable) || (istype(A,/obj/effect/overlay) && !istype(A,/obj/effect/overlay/puddle) && !istype(A, /obj/effect/overlay/hologram)) || istype(A,/obj/effect/rune))
+
 #define ismatrix(A) (istype(A, /matrix))
+
+#define ismecha(A) (istype(A, /obj/mecha))
+
+#define isID(A) (istype(A, /obj/item/weapon/card/id))
+
+#define isPDA(A) (istype(A, /obj/item/device/pda))
+
+#define isfloor(A) (istype(A, /turf/simulated/floor) || istype(A, /turf/unsimulated/floor) || istype(A, /turf/simulated/shuttle/floor))
 
 //Macros for antags
 
