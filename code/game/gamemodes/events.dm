@@ -225,6 +225,7 @@
 
 	sleep(100)
 */
+/*
 	for(var/mob/living/carbon/human/H in living_mob_list)
 		var/turf/T = get_turf(H)
 		if(!T)
@@ -251,7 +252,7 @@
 		M.apply_radiation((rand(15,75)),RAD_EXTERNAL)
 	sleep(100)
 	command_alert(/datum/command_alert/radiation)
-
+*/
 
 //Changing this to affect the main station. Blame Urist. --Pete
 /proc/prison_break() // -- Callagan

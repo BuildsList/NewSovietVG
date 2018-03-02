@@ -11,10 +11,8 @@
 	New()
 		..()
 		sleep(2)
-		if(prob(50))
-			new /obj/item/weapon/storage/backpack/captain(src)
-		else
-			new /obj/item/weapon/storage/backpack/satchel_cap(src)
+		new /obj/item/weapon/storage/backpack/captain(src)
+		new /obj/item/weapon/storage/backpack/satchel_cap(src)
 		new /obj/item/clothing/suit/captunic(src)
 		new /obj/item/clothing/suit/storage/capjacket(src)
 		new /obj/item/clothing/head/helmet/cap(src)
@@ -102,19 +100,15 @@
 	New()
 		..()
 		sleep(2)
-		if(prob(50))
-			new /obj/item/weapon/storage/backpack/security(src)
-		else
-			new /obj/item/weapon/storage/backpack/satchel_sec(src)
+		new /obj/item/weapon/storage/backpack/security(src)
+		new /obj/item/weapon/storage/backpack/satchel_sec(src)
 		new /obj/item/clothing/head/helmet/tactical/HoS(src)
 		new /obj/item/device/flashlight/tactical(src)
 		new /obj/item/clothing/accessory/holster/knife/boot/preloaded/tactical(src)
 		new /obj/item/clothing/suit/armor/vest(src)
 		new /obj/item/clothing/under/rank/head_of_security/jensen(src)
-		if(prob(50))
-			new /obj/item/clothing/suit/armor/hos/jensen(src)
-		else
-			new /obj/item/clothing/suit/armor/hos/sundowner(src)
+		new /obj/item/clothing/suit/armor/hos/jensen(src)
+		new /obj/item/clothing/suit/armor/hos/sundowner(src)
 		new /obj/item/clothing/head/helmet/tactical/HoS/dermal(src)
 		new /obj/item/weapon/cartridge/hos(src)
 		new /obj/item/device/detective_scanner(src)
@@ -131,6 +125,7 @@
 		new /obj/item/clothing/accessory/holster/handgun/waist(src)
 		new /obj/item/weapon/melee/telebaton(src)
 		new /obj/item/device/gps/secure(src)
+		new /obj/item/clothing/accessory/storage/black_vest(src)
 		return
 
 
@@ -149,10 +144,8 @@
 	New()
 		..()
 		sleep(2)
-		if(prob(50))
-			new /obj/item/weapon/storage/backpack/security(src)
-		else
-			new /obj/item/weapon/storage/backpack/satchel_sec(src)
+		new /obj/item/weapon/storage/backpack/security(src)
+		new /obj/item/weapon/storage/backpack/satchel_sec(src)
 		new /obj/item/clothing/suit/armor/vest/security(src)
 		new /obj/item/clothing/under/rank/warden(src)
 		new /obj/item/clothing/suit/armor/vest/warden(src)
@@ -169,6 +162,7 @@
 		new /obj/item/weapon/storage/box/bolas(src)
 		new /obj/item/weapon/batteringram(src)
 		new /obj/item/device/gps/secure(src)
+		new /obj/item/clothing/accessory/storage/black_vest(src)
 		return
 
 
@@ -186,10 +180,8 @@
 	New()
 		..()
 		sleep(2)
-		if(prob(50))
-			new /obj/item/weapon/storage/backpack/security(src)
-		else
-			new /obj/item/weapon/storage/backpack/satchel_sec(src)
+		new /obj/item/weapon/storage/backpack/security(src)
+		new /obj/item/weapon/storage/backpack/satchel_sec(src)
 		new /obj/item/clothing/suit/armor/vest/security(src)
 		new /obj/item/clothing/head/helmet/tactical/sec/preattached(src)
 		new /obj/item/clothing/accessory/holster/knife/boot/preloaded/tactical(src)
@@ -201,14 +193,13 @@
 		new /obj/item/weapon/grenade/flashbang(src)
 		new /obj/item/weapon/melee/baton/loaded(src)
 		new /obj/item/weapon/gun/energy/taser(src)
-		if(prob(50))
-			new /obj/item/clothing/glasses/sunglasses/sechud/prescription(src)
-		else
-			new /obj/item/clothing/glasses/sunglasses/sechud(src)
+		new /obj/item/clothing/glasses/sunglasses/sechud/prescription(src)
+		new /obj/item/clothing/glasses/sunglasses/sechud(src)
 		new /obj/item/taperoll/police(src)
 		new /obj/item/device/hailer(src) //wonder if vg would spam this
 		new /obj/item/clothing/gloves/black(src)
 		new /obj/item/device/gps/secure(src)
+		new /obj/item/clothing/accessory/storage/black_vest(src)
 		return
 
 
@@ -278,6 +269,7 @@
 		new /obj/item/binoculars(src)
 		new /obj/item/weapon/storage/box/surveillance(src)
 		new /obj/item/device/handtv(src)
+		new /obj/item/clothing/accessory/storage/black_vest(src)
 		return
 
 /obj/structure/closet/secure_closet/detective/update_icon()
