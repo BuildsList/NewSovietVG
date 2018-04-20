@@ -3092,7 +3092,10 @@ var/global/num_vending_terminals = 1
 /obj/machinery/vending/mining
 	name = "\improper Dwarven Mining Equipment"
 	desc = "Get your mining equipment here, and above all keep digging!"
-	req_access = list(access_cargo)
+	req_access = list(
+		access_cargo,
+		access_mining
+	)
 	product_slogans = list(
 		"This asteroid isn't going to dig itself!",
 		"Stay safe in the tunnels, bring two Kinetic Accelerators!",
