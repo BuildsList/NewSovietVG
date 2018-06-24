@@ -11,10 +11,8 @@
 /obj/structure/closet/secure_closet/engineering_chief/New()
 	..()
 	sleep(2)
-	if(prob(50))
-		new /obj/item/weapon/storage/backpack/industrial(src)
-	else
-		new /obj/item/weapon/storage/backpack/satchel_eng(src)
+	new /obj/item/weapon/storage/backpack/industrial(src)
+	new /obj/item/weapon/storage/backpack/satchel_eng(src)
 	new /obj/item/blueprints(src)
 	new /obj/item/clothing/under/rank/chief_engineer(src)
 	new /obj/item/clothing/head/hardhat/white(src)
@@ -35,6 +33,7 @@
 	new /obj/item/device/gps/engineering(src)
 	new /obj/item/weapon/storage/belt/utility/chief(src)
 	new /obj/item/clothing/glasses/scanner/material(src)
+	new /obj/item/clothing/accessory/storage/brown_vest(src)
 
 /obj/structure/closet/secure_closet/engineering_electrical
 	name = "electrical supplies locker"
@@ -95,10 +94,8 @@
 /obj/structure/closet/secure_closet/engineering_personal/New()
 	..()
 	sleep(2)
-	if(prob(50))
-		new /obj/item/weapon/storage/backpack/industrial(src)
-	else
-		new /obj/item/weapon/storage/backpack/satchel_eng(src)
+	new /obj/item/weapon/storage/backpack/industrial(src)
+	new /obj/item/weapon/storage/backpack/satchel_eng(src)
 	new /obj/item/clothing/under/rank/engineer(src)
 	new /obj/item/clothing/shoes/workboots(src)
 	new /obj/item/weapon/storage/box/inflatables(src)
@@ -107,14 +104,13 @@
 	new /obj/item/device/radio/headset/headset_eng(src)
 	new /obj/item/clothing/suit/storage/hazardvest(src)
 	new /obj/item/clothing/mask/gas(src)
-	if(prob(50))
-		new /obj/item/clothing/glasses/scanner/meson/prescription(src)
-	else
-		new /obj/item/clothing/glasses/scanner/meson(src)
+	new /obj/item/clothing/glasses/scanner/meson/prescription(src)
+	new /obj/item/clothing/glasses/scanner/meson(src)
 	new /obj/item/taperoll/engineering(src)
 	new /obj/item/taperoll/engineering(src)
 	new /obj/item/device/gps/engineering(src)
 	new /obj/item/clothing/glasses/scanner/material(src)
+	new /obj/item/clothing/accessory/storage/brown_vest(src)
 
 /obj/structure/closet/secure_closet/engineering_atmos
 	name = "\improper Atmospheric Technician's locker"
@@ -129,10 +125,8 @@
 /obj/structure/closet/secure_closet/engineering_atmos/New()
 	..()
 	sleep(2)
-	if(prob(50))
-		new /obj/item/weapon/storage/backpack(src)
-	else
-		new /obj/item/weapon/storage/backpack/satchel_norm(src)
+	new /obj/item/weapon/storage/backpack(src)
+	new /obj/item/weapon/storage/backpack/satchel_norm(src)
 	new /obj/item/clothing/under/rank/atmospheric_technician(src)
 	new /obj/item/clothing/shoes/workboots(src)
 	new /obj/item/weapon/storage/box/inflatables(src)
@@ -151,6 +145,7 @@
 	new /obj/item/device/analyzer(src)
 	new /obj/item/clothing/glasses/scanner/material(src)
 	new /obj/item/device/gps/engineering(src)
+	new /obj/item/clothing/accessory/storage/brown_vest(src)
 
 /obj/structure/closet/secure_closet/engineering_mechanic
 	name = "\improper Mechanic's locker"
@@ -165,10 +160,8 @@
 /obj/structure/closet/secure_closet/engineering_mechanic/New()
 	..()
 	sleep(2)
-	if(prob(50))
-		new /obj/item/weapon/storage/backpack/industrial(src)
-	else
-		new /obj/item/weapon/storage/backpack/satchel_eng(src)
+	new /obj/item/weapon/storage/backpack/industrial(src)
+	new /obj/item/weapon/storage/backpack/satchel_eng(src)
 	new /obj/item/clothing/under/rank/mechanic(src)
 	new /obj/item/clothing/shoes/workboots(src)
 	new /obj/item/weapon/storage/toolbox/mechanical(src)
@@ -180,11 +173,9 @@
 	new /obj/item/clothing/gloves/black(src)
 	new /obj/item/device/assembly_frame(src)
 	new /obj/item/device/assembly_frame(src)
-
-	if(prob(50))
-		new /obj/item/clothing/head/welding(src)
-	else
-		new /obj/item/clothing/glasses/welding(src)
+	new /obj/item/clothing/accessory/storage/brown_vest(src)
+	new /obj/item/clothing/head/welding(src)
+	new /obj/item/clothing/glasses/welding(src)
 
 /obj/structure/closet/secure_closet/engineering_general
 	name = "engineering locker"
