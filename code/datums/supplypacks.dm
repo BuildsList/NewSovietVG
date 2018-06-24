@@ -31,6 +31,10 @@ var/list/all_supply_groups = list("Supplies","Clothing","Security","Hospitality"
 		AM.forceMove(null)	//just to make sure they're deleted by the garbage collector
 	manifest += "</ul>"
 
+// Called after a crate containing the items specified by this datum is created
+/datum/supply_packs/proc/post_creation(var/atom/movable/container)
+	return
+
 //////SUPPLIES//////
 
 /datum/supply_packs/toner
@@ -177,6 +181,14 @@ var/list/all_supply_groups = list("Supplies","Clothing","Security","Hospitality"
 	cost = 10
 	containertype = /obj/structure/largecrate/showers
 	containername = "showers crate"
+	group = "Supplies"
+
+/datum/supply_packs/clock
+	name = "Grandfather Clock"
+	contains = list(/obj/structure/clock/unanchored)
+	cost = 40
+	containertype = /obj/structure/largecrate
+	containername = "ticking crate"
 	group = "Supplies"
 
 /datum/supply_packs/metal50
@@ -810,6 +822,29 @@ var/list/all_supply_groups = list("Supplies","Clothing","Security","Hospitality"
 	access = list(access_armory)
 	group = "Security"
 
+/datum/supply_packs/tactical
+	name = "Tactical Assault gear"
+	contains = list(/obj/item/clothing/suit/armor/plate_carrier,
+					/obj/item/clothing/suit/armor/plate_carrier,
+					/obj/item/clothing/suit/armor/plate_carrier,
+					/obj/item/weapon/armor_plate,
+					/obj/item/weapon/armor_plate,
+					/obj/item/weapon/armor_plate/bullet_resistant,
+					/obj/item/weapon/armor_plate/bullet_resistant,
+					/obj/item/weapon/armor_plate/laser_resistant,
+					/obj/item/weapon/armor_plate/laser_resistant,
+					/obj/item/clothing/head/helmet/visor,
+					/obj/item/clothing/head/helmet/visor,
+					/obj/item/clothing/head/helmet/visor,
+					/obj/item/weapon/shield/riot,
+					/obj/item/weapon/shield/riot,
+					/obj/item/weapon/shield/riot)
+	cost = 120
+	containertype = /obj/structure/closet/crate/secure
+	containername = "tactical assault gear crate"
+	access = list(access_armory)
+	group = "Security"
+
 /datum/supply_packs/loyalty
 	name = "Loyalty implants"
 	contains = list (/obj/item/weapon/storage/lockbox/loyalty)
@@ -904,9 +939,9 @@ var/list/all_supply_groups = list("Supplies","Clothing","Security","Hospitality"
 					/obj/item/weapon/gun/projectile/sec,
 					/obj/item/voucher/free_item/glockammo,
 					/obj/item/voucher/free_item/glockammo)
-	cost = 200
+	cost = 60
 	containertype = /obj/structure/closet/crate/secure/weapon
-	containername = ".45 pistols crate"
+	containername = ".380 pistols crate"
 	access = list(access_armory)
 	group = "Security"
 
@@ -918,7 +953,7 @@ var/list/all_supply_groups = list("Supplies","Clothing","Security","Hospitality"
 					/obj/item/ammo_storage/magazine/m380auto)
 	cost = 50
 	containertype = /obj/structure/closet/crate/secure/gear
-	containername = ".45 pistol lethal ammo crate"
+	containername = ".380 pistol lethal ammo crate"
 	access = list(access_armory)
 	group = "Security"
 
@@ -930,7 +965,7 @@ var/list/all_supply_groups = list("Supplies","Clothing","Security","Hospitality"
 					/obj/item/ammo_storage/magazine/m380auto/practice)
 	cost = 10
 	containertype = /obj/structure/closet/crate/secure/gear
-	containername = ".45 pistol practice ammo crate"
+	containername = ".380 pistol practice ammo crate"
 	access = list(access_security)
 	group = "Security"
 
@@ -942,7 +977,7 @@ var/list/all_supply_groups = list("Supplies","Clothing","Security","Hospitality"
 					/obj/item/ammo_storage/magazine/m380auto/rubber)
 	cost = 30
 	containertype = /obj/structure/closet/crate/secure/gear
-	containername = ".45 pistol rubber ammo crate"
+	containername = ".380 pistol rubber ammo crate"
 	access = list(access_security)
 	group = "Security"
 
@@ -1053,6 +1088,15 @@ var/list/all_supply_groups = list("Supplies","Clothing","Security","Hospitality"
 	containertype = /obj/structure/closet/crate/freezer
 	containername = "pizza crate"
 	group = "Hospitality"
+
+/datum/supply_packs/randomised/pizza/post_creation(var/atom/movable/container)
+	if(!station_does_not_tip)
+		return
+	for(var/obj/item/pizzabox/box in container)
+		var/obj/item/weapon/reagent_containers/food/snacks/sliceable/pizza/pizza = box.pizza
+		if(!pizza)
+			continue
+		pizza.make_poisonous()
 
 /datum/supply_packs/cafe
 	name = "Cafe equipment"
@@ -1212,7 +1256,7 @@ var/list/all_supply_groups = list("Supplies","Clothing","Security","Hospitality"
 	cost = 10
 	containertype = /obj/structure/closet/crate/secure/engisec
 	containername = "emitter crate"
-	access = list(access_ce)
+	access = list(access_engine)
 	group = "Engineering"
 
 /datum/supply_packs/engine/field_gen
@@ -1221,7 +1265,7 @@ var/list/all_supply_groups = list("Supplies","Clothing","Security","Hospitality"
 					/obj/machinery/field_generator)
 	containertype = /obj/structure/closet/crate/secure/engisec
 	containername = "field generator crate"
-	access = list(access_ce)
+	access = list(access_engine)
 	group = "Engineering"
 
 /datum/supply_packs/engine/sing_gen
@@ -1259,7 +1303,7 @@ var/list/all_supply_groups = list("Supplies","Clothing","Security","Hospitality"
 					/obj/structure/particle_accelerator/end_cap)
 	containertype = /obj/structure/closet/crate/secure/engisec
 	containername = "particle accelerator crate"
-	access = list(access_ce)
+	access = list(access_engine)
 	group = "Engineering"
 
 /datum/supply_packs/shieldgens
@@ -1271,7 +1315,7 @@ var/list/all_supply_groups = list("Supplies","Clothing","Security","Hospitality"
 	cost = 20
 	containertype = /obj/structure/closet/crate/secure/engisec
 	containername = "shield generators crate"
-	access = list(access_teleporter)
+	access = list(access_engine)
 	group = "Engineering"
 
 /datum/supply_packs/engine/amrcontrol
@@ -1366,7 +1410,7 @@ var/list/all_supply_groups = list("Supplies","Clothing","Security","Hospitality"
 	containertype = /obj/structure/closet/crate/secure/engisec
 	containername = "Starscreen shield generator crate"
 	group = "Engineering"
-	access = list(access_ce)
+	access = list(access_engine)
 
 /datum/supply_packs/shield_cap
 	contains = list(/obj/item/weapon/circuitboard/shield_cap)
@@ -1375,7 +1419,7 @@ var/list/all_supply_groups = list("Supplies","Clothing","Security","Hospitality"
 	containertype = /obj/structure/closet/crate/secure/engisec
 	containername = "Starscreen shield capacitor crate"
 	group = "Engineering"
-	access = list(access_ce)
+	access = list(access_engine)
 
 /datum/supply_packs/teg
 	contains = list(/obj/machinery/power/generator)
@@ -1569,7 +1613,7 @@ var/list/all_supply_groups = list("Supplies","Clothing","Security","Hospitality"
 	cost = 200
 	containertype = "/obj/structure/closet/crate/secure"
 	containername = "motorized wheelchair crate"
-	access = list(access_cmo)
+	access = list(access_medical)
 	group = "Medical"
 
 /datum/supply_packs/skele_stand
@@ -1631,6 +1675,24 @@ var/list/all_supply_groups = list("Supplies","Clothing","Security","Hospitality"
 	containertype = /obj/structure/closet/crate/secure/scisec
 	containername = "robotics assembly crate"
 	access = list(access_robotics)
+	group = "Science"
+
+/datum/supply_packs/robot_maintenance
+	name = "Robot maintenance equipment"
+	contains = list(/obj/item/weapon/book/manual/robotics_cyborgs,
+					/obj/item/weapon/cell/high,
+					/obj/item/weapon/storage/toolbox/robotics,
+					/obj/item/robot_parts/robot_component/armour,
+					/obj/item/robot_parts/robot_component/actuator,
+					/obj/item/robot_parts/robot_component/radio,
+					/obj/item/robot_parts/robot_component/binary_communication_device,
+					/obj/item/robot_parts/robot_component/camera,
+					/obj/item/robot_parts/robot_component/diagnosis_unit,
+					/obj/item/borg/upgrade/restart
+					)
+	cost = 120
+	containertype = /obj/structure/closet/crate/sci
+	containername = "robot maintenance equipment crate"
 	group = "Science"
 
 /datum/supply_packs/suspension_gen

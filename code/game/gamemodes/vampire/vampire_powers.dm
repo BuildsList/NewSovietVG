@@ -31,7 +31,8 @@
 		to_chat(src, "<span class='warning'>You require at least [required_blood] units of usable blood to do that!</span>")
 		return 0
 	//chapel check
-	if(istype(areaMaster, /area/chapel))
+	var/area/this_area = get_area(src)
+	if(istype(this_area, /area/chapel))
 		if(!fullpower)
 			to_chat(src, "<span class='warning'>Your powers are useless on this holy ground.</span>")
 			return 0
@@ -451,6 +452,7 @@
 		return 0
 	if(!C.vampire_affected(mind))
 		C.visible_message("<span class='warning'>[C] seems to resist the takeover!</span>", "<span class='notice'>Your faith of [ticker.Bible_deity_name] has kept your mind clear of all evil</span>")
+		return 0
 	if(!ishuman(C))
 		to_chat(src, "<span class='warning'>You can only enthrall humanoids!</span>")
 		return 0

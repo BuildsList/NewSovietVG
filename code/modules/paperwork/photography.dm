@@ -32,7 +32,7 @@
 	var/icon/img		//Big photo image
 	var/scribble		//Scribble on the back.
 	var/blueprints = FALSE	//Does it include the blueprints?
-	var/info 			//Info on the camera about mobs or some shit 
+	var/info 			//Info on the camera about mobs or some shit
 
 	autoignition_temperature = 530 // Kelvin
 	fire_fuel = TRUE
@@ -131,6 +131,21 @@
 	var/photo_size = 3 //Default is 3x3. 1x1, 5x5, 7x7 are also options
 
 	var/panelopen = FALSE
+	var/obj/item/weapon/light/bulb/flashbulb = null
+	var/start_with_bulb = TRUE
+
+/obj/item/device/camera/New(var/empty = FALSE)
+	..()
+	if(empty == TRUE)
+		start_with_bulb = FALSE
+		pictures_left = 0
+	if(start_with_bulb)
+		flashbulb = new(src)
+
+/obj/item/device/camera/Destroy()
+	qdel(flashbulb)
+	flashbulb = null
+	..()
 
 /obj/item/device/camera/sepia
 	name = "camera"
@@ -196,6 +211,7 @@
 
 /obj/item/device/camera/silicon
 	name = "silicon photo camera"
+	start_with_bulb = FALSE
 	var/in_camera_mode = FALSE
 
 /obj/item/device/camera/silicon/ai_camera //camera AI can take pictures with
@@ -209,13 +225,21 @@
 	set name = "Print Image"
 	set src in usr
 
+	if(!isrobot(usr))
+		return
+
+	var/mob/living/silicon/robot/R = usr
+
+	if(R.incapacitated())
+		return
+
 	borgprint()
 
 /obj/item/device/camera/attackby(obj/item/I, mob/user)
 	if(isscrewdriver(I))
 		to_chat(user, "You [panelopen ? "close" : "open"] the panel on the side of \the [src].")
 		panelopen = !panelopen
-		playsound(get_turf(src), 'sound/items/Screwdriver.ogg', 50, 1)
+		playsound(src, 'sound/items/Screwdriver.ogg', 50, 1)
 
 	if(istype(I, /obj/item/stack/cable_coil))
 		if(!panelopen)
@@ -227,10 +251,12 @@
 		to_chat(user, "You attach [C.amount > 5 ? "some" : "the"] wires to \the [src]'s flash circuit.")
 		if(loc == user)
 			user.drop_item(src, force_drop = 1)
-			var/obj/item/device/blinder/Q = new (get_turf(user))
+			var/obj/item/device/blinder/Q = new(get_turf(user), empty = TRUE)
+			handle_blinder(Q)
 			user.put_in_hands(Q)
 		else
-			new /obj/item/device/blinder(get_turf(loc))
+			var/obj/item/device/blinder/Q = new(get_turf(loc), empty = TRUE)
+			handle_blinder(Q)
 		C.use(5)
 		qdel(src)
 
@@ -249,6 +275,20 @@
 			return
 	..()
 
+/obj/item/device/camera/proc/handle_blinder(obj/item/device/blinder/blinder)
+	if(flashbulb)
+		blinder.flashbulb = flashbulb
+		flashbulb.forceMove(blinder)
+		flashbulb = null
+
+	blinder.name = name
+	blinder.icon = icon
+	blinder.base_desc = desc
+	blinder.update_desc()
+	blinder.icon_state = icon_state
+	blinder.item_state = item_state
+	blinder.mech_flags = mech_flags
+	blinder.decon_path = type
 
 /obj/item/device/camera/proc/camera_get_icon(list/turfs, turf/center)
 	var/atoms[] = list()
@@ -259,21 +299,9 @@
 				continue
 			atoms.Add(A)
 
-	var/list/sorted = list()
-	var/j
-	for(var/i = 1 to atoms.len)
-		var/atom/c = atoms[i]
-		for(j = sorted.len, j > 0, --j)
-			var/atom/c2 = sorted[j]
-			if(c2.plane < c.plane)
-				break
-			else if((c2.plane == c.plane) && (c2.layer <= c.layer))
-				break
-		sorted.Insert(j+1, c)
-
 	var/icon/res = get_base_photo_icon()
 
-	for(var/atom/A in sorted)
+	for(var/atom/A in plane_layer_sort(atoms))
 		var/icon/img = getFlatIcon(A,A.dir,0)
 		if(istype(A, /mob/living) && A:lying)
 			img.Turn(A:lying)
@@ -310,21 +338,9 @@
 			else
 				atoms.Add(A)
 
-	var/list/sorted = list()
-	var/j
-	for(var/i = 1 to atoms.len)
-		var/atom/c = atoms[i]
-		for(j = sorted.len, j > 0, --j)
-			var/atom/c2 = sorted[j]
-			if(c2.plane < c.plane)
-				break
-			else if((c2.plane == c.plane) && (c2.layer <= c.layer))
-				break
-		sorted.Insert(j+1, c)
-
 	var/icon/res = get_base_photo_icon()
 
-	for(var/atom/A in sorted)
+	for(var/atom/A in plane_layer_sort(atoms))
 		var/icon/img = getFlatIcon(A,A.dir,0)
 		if(istype(A, /mob/living) && A:lying)
 			img.Turn(A:lying)
@@ -588,7 +604,6 @@
 	P.pixel_y = selection.fields["pixel_y"]
 
 	P.show(usr)
-	to_chat(usr, P.info)
 	qdel(P)    //so 10 thousdand pictures items are not left in memory should an AI take them and then view them all.
 
 /obj/item/device/camera/silicon/proc/viewpictures(var/mob/user)

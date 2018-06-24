@@ -442,6 +442,7 @@ turf/unsimulated/mineral/ChangeTurf(var/turf/N, var/tell_universe=1, var/force_l
 	//icon_plating = "asteroid"
 	var/dug = 0       //0 = has not yet been dug, 1 = has already been dug
 	var/sand_type = /obj/item/weapon/ore/glass
+	plane = PLATING_PLANE
 
 /turf/unsimulated/floor/asteroid/air
 	oxygen = MOLES_O2STANDARD
@@ -468,7 +469,6 @@ turf/unsimulated/mineral/ChangeTurf(var/turf/N, var/tell_universe=1, var/force_l
 
 	if(prob(20))
 		icon_state = "asteroid[rand(0,12)]"
-	initialize()
 
 
 /turf/unsimulated/floor/asteroid/ex_act(severity)
@@ -501,7 +501,7 @@ turf/unsimulated/mineral/ChangeTurf(var/turf/N, var/tell_universe=1, var/force_l
 			return
 
 		to_chat(user, "<span class='rose'>You start digging.<span>")
-		playsound(get_turf(src), 'sound/effects/rustle1.ogg', 50, 1) //russle sounds sounded better
+		playsound(src, 'sound/effects/rustle1.ogg', 50, 1) //russle sounds sounded better
 
 		if(do_after(user, src, used_digging.digspeed) && user) //the better the drill, the faster the digging
 			playsound(src, 'sound/items/shovel.ogg', 50, 1)
@@ -513,7 +513,7 @@ turf/unsimulated/mineral/ChangeTurf(var/turf/N, var/tell_universe=1, var/force_l
 	return
 
 /turf/unsimulated/floor/asteroid/update_icon()
-	if(dug && istype(sand_type,/obj/item/weapon/ore/glass))
+	if(dug && ispath(sand_type, /obj/item/weapon/ore/glass))
 		icon_state = "asteroid_dug"
 
 /turf/unsimulated/floor/asteroid/proc/gets_dug()
@@ -850,10 +850,10 @@ turf/unsimulated/mineral/ChangeTurf(var/turf/N, var/tell_universe=1, var/force_l
 	if(stage == 2) //Gibtonite deposit is now benign and extractable. Depending on how close you were to it blowing up before defusing, you get better quality ore.
 		var/obj/item/weapon/gibtonite/G = new /obj/item/weapon/gibtonite/(src)
 		if(det_time <= 0)
-			G.quality = 3
+			G.det_quality = 3
 			G.icon_state = "Gibtonite ore 3"
 		if(det_time >= 1 && det_time <= 2)
-			G.quality = 2
+			G.det_quality = 2
 			G.icon_state = "Gibtonite ore 2"
 	ChangeTurf(/turf/unsimulated/floor/asteroid/gibtonite_remains)
 

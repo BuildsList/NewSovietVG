@@ -14,10 +14,15 @@
 	icon = 'icons/obj/stools-chairs-beds.dmi'
 	layer = BELOW_OBJ_LAYER
 	anchored = 1
-	var/sheet_type = /obj/item/stack/sheet/metal
-	var/sheet_amt = 1
+	sheet_type = /obj/item/stack/sheet/metal
+	sheet_amt = 1
 
 	var/lock_type = /datum/locking_category/buckle/bed
+
+/obj/structure/bed/New()
+	..()
+	if(material_type)
+		sheet_type = material_type.sheettype
 
 /obj/structure/bed/alien
 	name = "resting contraption"
@@ -77,7 +82,7 @@
 			"<span class='notice'>[M] unbuckled \himself!</span>",\
 			"You unbuckle yourself from \the [src].",\
 			"You hear metal clanking.")
-	playsound(get_turf(src), 'sound/misc/buckle_unclick.ogg', 50, 1)
+	playsound(src, 'sound/misc/buckle_unclick.ogg', 50, 1)
 	unlock_atom(M)
 
 	add_fingerprint(user)
@@ -117,7 +122,7 @@
 			"You are buckled in to [src] by [user.name].",\
 			"You hear metal clanking.")
 
-	playsound(get_turf(src), 'sound/misc/buckle_click.ogg', 50, 1)
+	playsound(src, 'sound/misc/buckle_click.ogg', 50, 1)
 	add_fingerprint(user)
 
 	lock_atom(M, lock_type)
@@ -199,7 +204,7 @@
 	if(istype(W,/obj/item/roller_holder))
 		manual_unbuckle(user)
 	if(iswrench(W))
-		playsound(get_turf(src), 'sound/items/Ratchet.ogg', 50, 1)
+		playsound(src, 'sound/items/Ratchet.ogg', 50, 1)
 		drop_stack(sheet_type, loc, 2, user)
 		qdel(src)
 		return

@@ -10,11 +10,25 @@ var/global/num_vending_terminals = 1
 	var/product_path = null
 	var/original_amount = 0
 	var/amount = 0
+	var/stack_amount = 0 //only used when we're dealing with /obj/item/stack
 	var/price = 0
 	var/display_color = "blue"
 	var/category = CAT_NORMAL//available by default, contraband, or premium (requires a coin)
 	var/subcategory = null
 	var/mini_icon = null
+
+//this proc is only used when an item is inserted into a custom vending machine.
+/datum/data/vending_product/proc/custom_entry(var/obj/item/item)
+	if(istype(item, /obj/item/stack))
+		var/obj/item/stack/S = item
+		stack_amount = S.amount
+		product_name = "A stack of [stack_amount] [item.name]"
+	else
+		product_name = item.name
+	mini_icon = costly_bicon(item)
+	display_color = pick("red", "blue", "green")
+	product_path = item
+	amount += 1
 
 /* TODO: Add this to deconstruction for vending machines
 /obj/item/compressed_vend
@@ -46,7 +60,10 @@ var/global/num_vending_terminals = 1
 	var/ads_chance = 50 // Chance of an ad appearing on screen
 	var/datum/data/vending_product/currently_vending = null // A /datum/data/vending_product instance of what we're paying for right now.
 	// To be filled out at compile time
-	var/list/accepted_coins	= list()	// Accepted coins by the machine.
+	var/list/accepted_coins = list(
+			/obj/item/weapon/coin,
+			/obj/item/weapon/reagent_containers/food/snacks/chococoin
+			)	// Accepted coins by the machine.
 
 	var/list/products	= list()	// For each, use the following pattern:
 	var/list/contraband	= list()	// list(/type/path = amount,/type/path2 = amount2)
@@ -88,6 +105,9 @@ var/global/num_vending_terminals = 1
 	machine_flags = SCREWTOGGLE | WRENCHMOVE | FIXED2WORK | CROWDESTROY | EJECTNOTDEL | PURCHASER | WIREJACK
 
 	var/account_first_linked = 1
+	var/inserting_mode = FALSE // insert items directly into the machine (used for custom vending machines)
+	var/is_custom_machine = FALSE // true if this vendor supports editing the prices
+	var/edit_mode = FALSE // Used for editing prices
 	var/is_being_filled = FALSE // `in_use` from /obj is already used for tracking users of this machine's UI
 
 /obj/machinery/vending/cultify()
@@ -100,11 +120,6 @@ var/global/num_vending_terminals = 1
 	num_vending_machines++
 
 	overlays_vending[1] = "[icon_state]-panel"
-
-	accepted_coins = list(
-			/obj/item/weapon/coin,
-			/obj/item/weapon/reagent_containers/food/snacks/chococoin
-			)
 
 	component_parts = newlist(\
 		/obj/item/weapon/circuitboard/vendomat,\
@@ -128,12 +143,14 @@ var/global/num_vending_terminals = 1
 
 	if(ticker)
 		initialize()
-		link_to_account()
 
 	return
 
 /obj/machinery/vending/initialize()
-	..()
+	build_inventories()
+	link_to_account()
+
+/obj/machinery/vending/proc/build_inventories()
 	product_records = new/list()
 	build_inventory(products)
 	build_inventory(contraband, 1)
@@ -141,6 +158,7 @@ var/global/num_vending_terminals = 1
 	build_inventory(vouched, 0, 0, 1)
 
 /obj/machinery/vending/proc/link_to_account()
+	reconnect_database()
 	linked_account = department_accounts["Cargo"]
 
 /obj/machinery/vending/RefreshParts()
@@ -210,7 +228,7 @@ var/global/num_vending_terminals = 1
 					newmachine.product_records = P.product_records
 					newmachine.hidden_records = P.hidden_records
 					newmachine.coin_records = P.coin_records
-					newmachine.initialize()
+					newmachine.build_inventories()
 				qdel(P)
 				if(user.machine==src)
 					newmachine.attack_hand(user)
@@ -234,7 +252,7 @@ var/global/num_vending_terminals = 1
 				if(do_after_many(user, list(src, P), 3 SECONDS))
 					to_chat(user, "<span class='notice'>[bicon(src)] You finish refilling the vending machine.</span>")
 					playsound(src, 'sound/machines/hiss.ogg', 50, 0, 0)
-					if(check_for_custom_vendor())
+					if(is_custom_machine)
 						custom_refill(P, user)
 					else
 						normal_refill(P, user)
@@ -244,16 +262,6 @@ var/global/num_vending_terminals = 1
 
 			else
 				to_chat(user, "<span class='warning'>This recharge pack isn't meant for this kind of vending machines.</span>")
-
-/obj/machinery/vending/proc/check_for_custom_vendor()
-	//We check if there's an in-game object instead of a typepath inside the vending machine.
-	for(var/item in products) //We only support the product list for the moment. This means no custom premium/contraband products
-		if(!ispath(item))
-			return TRUE
-	if(!products.len)
-		return TRUE
-
-	return FALSE
 
 /obj/machinery/vending/proc/normal_refill(obj/structure/vendomatpack/P, mob/user)
 	for (var/datum/data/vending_product/D in product_records)
@@ -279,7 +287,7 @@ var/global/num_vending_terminals = 1
 				I.forceMove(src)
 		products += P.stock
 		product_records += P.product_records
-		initialize()
+		build_inventories()
 	getFromPool(/obj/item/stack/sheet/cardboard, P.loc, 4)
 	qdel(P)
 
@@ -330,9 +338,7 @@ var/global/num_vending_terminals = 1
 		R.original_amount = amount
 		R.price = price
 		R.display_color = pick("red", "blue", "green")
-		var/is_custom = FALSE
-		if(check_for_custom_vendor())
-			is_custom = TRUE
+		if(is_custom_machine)
 			var/obj/O = R.product_path
 			R.price = O.price
 			R.product_name = "[O.name]"
@@ -351,7 +357,7 @@ var/global/num_vending_terminals = 1
 			product_records.Add(R)
 
 		var/obj/item/initializer = typepath
-		if(!is_custom)
+		if(!is_custom_machine)
 			R.product_name = initial(initializer.name)
 		R.subcategory = initial(initializer.vending_cat)
 
@@ -417,14 +423,14 @@ var/global/num_vending_terminals = 1
 	return 1
 
 /obj/machinery/vending/attackby(obj/item/W, mob/user)
-	if(stat & (BROKEN))
+	if(stat & (BROKEN) && !iswrench(W))
 		if(istype(W, /obj/item/stack/sheet/glass/rglass))
 			var/obj/item/stack/sheet/glass/rglass/G = W
 			to_chat(user, "<span class='notice'>You replace the broken glass.</span>")
 			G.use(1)
 			stat &= ~BROKEN
 			src.health = 100
-			src.update_vicon()
+			power_change()
 			getFromPool(/obj/item/weapon/shard, loc)
 		else
 			to_chat(user, "<span class='notice'>The glass in \the [src] is broken! Fix it first.</span>")
@@ -500,34 +506,55 @@ var/global/num_vending_terminals = 1
 			src.updateUsrDialog()
 			return
 		//attempt to connect to a new db, and if that doesn't work then fail
-		if(linked_account)
-			if(account_first_linked)
-				if(!user.Adjacent(src))
-					return 0
-				var/account_try = input(user,"Please enter the already connected account number","Security measure") as num
-				if(!user.Adjacent(src))
-					return 0
-				if(account_try != linked_account.account_number)
-					to_chat(user, "[bicon(src)]<span class='warning'>Access denied. Your input doesn't match the vending machine's connected account.</span>")
-					return
+		if(!linked_account)
+			connect_to_user_account(user)
+			return
+
+		if(account_first_linked)
 			if(!user.Adjacent(src))
 				return 0
-			var/new_account = input(user,"Please enter the account to connect to.","New account link") as num
+			var/account_try = input(user,"Please enter the already connected account number","Security measure") as num
 			if(!user.Adjacent(src))
 				return 0
-			for(var/datum/money_account/D in all_money_accounts)
-				if(D.account_number == new_account)
-					linked_account = D
-					if(!account_first_linked)
-						account_first_linked = 1
-					playsound(get_turf(src), 'sound/machines/twobeep.ogg', 50, 0)
-					to_chat(user, "[bicon(src)]<span class='notice'>New connection established: [D.owner_name].</span>")
-					return
-			to_chat(user, "[bicon(src)]<span class='warning'>The specified account doesn't exist.</span>")
+			if(account_try != linked_account.account_number)
+				to_chat(user, "[bicon(src)]<span class='warning'>Access denied. Your input doesn't match the vending machine's connected account.</span>")
+				return 0
+		if(!user.Adjacent(src))
+			return 0
+		connect_to_user_account(user)
+		return
 
-		else
-			to_chat(usr, "[bicon(src)]<span class='warning'>Unable to connect to linked account. Please contact a god.</span>")
+	else if(istype(W, /obj/item/) && inserting_mode)
+		if(user.drop_item(W, src))
+			insert_item(W)
 
+/obj/machinery/vending/proc/connect_to_user_account(mob/user)
+	var/new_account = input(user,"Please enter the account to connect to.","New account link") as num
+	if(!user.Adjacent(src) || !new_account)
+		return FALSE
+	for(var/datum/money_account/D in all_money_accounts)
+		if(D.account_number == new_account)
+			linked_account = D
+			if(!account_first_linked)
+				account_first_linked = 1
+			playsound(src, 'sound/machines/twobeep.ogg', 50, 0)
+			to_chat(user, "[bicon(src)]<span class='notice'>New connection established: [D.owner_name].</span>")
+			return TRUE
+	to_chat(user, "[bicon(src)]<span class='warning'>The specified account doesn't exist.</span>")
+	return FALSE
+
+/obj/machinery/vending/proc/insert_item(var/obj/item/item)
+	for(var/datum/data/vending_product/VP in product_records)
+		if(VP.product_path == item)
+			VP.amount += 1
+			if(istype(item, /obj/item/stack))
+				var/obj/item/stack/S = item
+				VP.product_name = "A stack of [S.amount] [S.name]"
+			return
+	var/datum/data/vending_product/R = new()
+	R.custom_entry(item)
+	product_records += R
+	products += item
 //H.wear_id
 
 /**
@@ -642,6 +669,8 @@ var/global/num_vending_terminals = 1
 	if (P.amount > 0)
 		var/idx=GetProductIndex(P)
 		dat += " <a href='byond://?src=\ref[src];vend=[idx];cat=[P.category]'>(Vend)</A>"
+		if (edit_mode)
+			dat += " <a href='byond://?src=\ref[src];set_price=[idx];cat=[P.category]'>(Set Price)</A>"
 	else
 		dat += " <span class='warning'>SOLD OUT</span>"
 	dat += "<br>"
@@ -683,9 +712,7 @@ var/global/num_vending_terminals = 1
 
 	spawn(ticks)
 
-	if(stat & (NOPOWER)) //Make another check just in case something goes weird
-		stat &= ~NOPOWER
-		src.update_vicon()
+	power_change()
 
 /obj/machinery/vending/proc/update_vicon()
 	if(stat & (BROKEN))
@@ -817,6 +844,14 @@ var/global/num_vending_terminals = 1
 
 		if(product_slogans != "")
 			dat += "The speaker switch is [shut_up ? "off" : "on"]. <a href='?src=\ref[src];togglevoice=[1]'>Toggle</a>"
+			dat += "<br>"
+
+		if(is_custom_machine)
+			dat += "Insert items mode is [inserting_mode ? "on" : "off"]. <a href='?src=\ref[src];toggle_insert_mode=[1]'>Toggle</a>"
+			dat += "<br>"
+			dat += "The prices edit mode is [edit_mode ? "on" : "off"]. <a href='?src=\ref[src];toggle_edit_mode=[1]'>Toggle</a>"
+			dat += "<br><br>"
+			dat += "<i>Note: Remember to slide your ID on this machine if you don't want random people to change your prices.</i>"
 
 	user << browse(dat, "window=vending;size=400x[vertical]")
 	onclose(user, "vending")
@@ -841,11 +876,11 @@ var/global/num_vending_terminals = 1
 			var/cat=text2num(href_list["cat"])
 			var/datum/data/vending_product/R = GetProductByID(idx,cat)
 			if(R.price)
-				can_vend = 0//all borgs can buy free items from vending machines
+				can_vend = FALSE //all borgs can buy free items from vending machines
 		if(istype(usr,/mob/living/silicon/robot))
 			var/mob/living/silicon/robot/R = usr
-			if((R.module && istype(R.module,/obj/item/weapon/robot_module/butler) ) || isMoMMI(R))
-				can_vend = 1//only service borgs and MoMMI can buy costly items
+			if((R.module && (R.module.quirk_flags & MODULE_CAN_BUY)))
+				can_vend = TRUE //But if their module allows it..
 		if(!can_vend)
 			to_chat(usr, "<span class='warning'>The vending machine refuses to interface with you, as you are not in its target demographic!</span>")
 			return
@@ -892,10 +927,30 @@ var/global/num_vending_terminals = 1
 
 		return
 
+	else if (href_list["set_price"] && src.vend_ready && !currently_vending)
+		//testing("vend: [href]")
+
+		if (!allowed(usr) && !emagged && scan_id) //For SECURE VENDING MACHINES YEAH
+			to_chat(usr, "<span class='warning'>Access denied.</span>")//Unless emagged of course
+
+			flick(src.icon_deny,src)
+			return
+
+		var/idx=text2num(href_list["set_price"])
+		var/cat=text2num(href_list["cat"])
+
+		var/datum/data/vending_product/R = GetProductByID(idx,cat)
+		if (!R || !istype(R) || !R.product_path || R.amount <= 0)
+			message_admins("Invalid vend request by [formatJumpTo(src.loc)]: [href]")
+			return
+
+		var/new_price = input("Enter a price", "Change price", R.price) as null|num
+		if(new_price == null || new_price < 0)
+			new_price = R.price
+		R.price = new_price
+
 	else if (href_list["cancel_buying"])
 		src.currently_vending = null
-		src.updateUsrDialog()
-		return
 
 	else if (href_list["buy"])
 		var/obj/item/weapon/card/card = usr.get_id_card()
@@ -903,11 +958,17 @@ var/global/num_vending_terminals = 1
 			connect_account(usr, card)
 		else
 			to_chat(usr, "<span class='warning'>Please present a valid ID.</span>")
-		src.updateUsrDialog()
-		return
 
 	else if ((href_list["togglevoice"]) && (src.panel_open))
 		src.shut_up = !src.shut_up
+
+	else if ((href_list["toggle_edit_mode"]))
+		if(is_custom_machine)
+			edit_mode = !edit_mode
+
+	else if ((href_list["toggle_insert_mode"]))
+		if(is_custom_machine)
+			inserting_mode = !inserting_mode
 
 	src.add_fingerprint(usr)
 	src.updateUsrDialog()
@@ -1076,7 +1137,13 @@ var/global/num_vending_terminals = 1
 			continue
 
 		R.amount--
-		throw_item = new dump_path(src.loc)
+
+		if(is_custom_machine)
+			products.Remove(throw_item)
+			throw_item = dump_path
+			throw_item.forceMove(get_turf(src))
+		else
+			throw_item = new dump_path(src.loc)
 
 		if (!throw_item)
 			return 0
@@ -1296,9 +1363,11 @@ var/global/num_vending_terminals = 1
 		"Try our new jerky!"
 	)
 	icon_state = "snack"
+	icon_vend = "snack-vend"
+	vend_delay = 25
 	products = list(
 		/obj/item/weapon/reagent_containers/food/snacks/candy = 6,
-		/obj/item/weapon/reagent_containers/food/drinks/dry_ramen = 6,
+		/obj/item/weapon/reagent_containers/food/drinks/dry_ramen/heating = 6,
 		/obj/item/weapon/reagent_containers/food/snacks/chips =6,
 		/obj/item/weapon/reagent_containers/food/snacks/sosjerky = 6,
 		/obj/item/weapon/reagent_containers/food/snacks/no_raisin = 6,
@@ -1315,7 +1384,7 @@ var/global/num_vending_terminals = 1
 		)
 	prices = list(
 		/obj/item/weapon/reagent_containers/food/snacks/candy = 13,
-		/obj/item/weapon/reagent_containers/food/drinks/dry_ramen = 15,
+		/obj/item/weapon/reagent_containers/food/drinks/dry_ramen/heating = 15,
 		/obj/item/weapon/reagent_containers/food/snacks/chips = 30,
 		/obj/item/weapon/reagent_containers/food/snacks/sosjerky = 40,
 		/obj/item/weapon/reagent_containers/food/snacks/no_raisin = 60,
@@ -1333,6 +1402,8 @@ var/global/num_vending_terminals = 1
 	name = "\improper Robust Softdrinks"
 	desc = "A softdrink vendor provided by Robust Industries, LLC."
 	icon_state = "Cola_Machine"
+	icon_vend = "Cola_Machine-vend"
+	vend_delay = 11
 	product_slogans = list(
 		"Robust Softdrinks: More robust than a toolbox to the head!",
 		"At least we aren't Dan!"
@@ -1413,6 +1484,7 @@ var/global/num_vending_terminals = 1
 	product_slogans = list("Carts to go!")
 	icon_state = "cart"
 	icon_deny = "cart-deny"
+	icon_vend = "cart-vend"
 	products = list(
 		/obj/item/weapon/cartridge/captain = 3,
 		/obj/item/weapon/cartridge/hop = 3,
@@ -1459,6 +1531,8 @@ var/global/num_vending_terminals = 1
 		"Award-winning cigs."
 	)
 	icon_state = "cigs"
+	icon_vend = "cigs-vend"
+	vend_delay = 21
 	products = list(
 		/obj/item/weapon/storage/fancy/cigarettes = 10,
 		/obj/item/weapon/storage/fancy/matchbox = 10,
@@ -1485,6 +1559,8 @@ var/global/num_vending_terminals = 1
 	req_access = list(access_medical)
 	icon_state = "med"
 	icon_deny = "med-deny"
+	icon_vend = "med-vend"
+	vend_delay = 18
 	product_ads = list(
 		"Go save some lives!",
 		"The best stuff for your medbay.",
@@ -1613,7 +1689,7 @@ var/global/num_vending_terminals = 1
 	if(do_after(user, src, 40))
 		user.visible_message(	"[user] detaches the NanoMed from the wall.",
 								"You detach the NanoMed from the wall.")
-		playsound(get_turf(src), 'sound/items/Crowbar.ogg', 50, 1)
+		playsound(src, 'sound/items/Crowbar.ogg', 50, 1)
 		new /obj/item/mounted/frame/wallmed(src.loc)
 
 		for(var/obj/I in src)
@@ -1631,7 +1707,7 @@ var/global/num_vending_terminals = 1
 	if(do_after(user, src, 40))
 		user.visible_message(	"[user] detaches the NanoMed from the wall.",
 								"You detach the NanoMed from the wall.")
-		playsound(get_turf(src), 'sound/items/Crowbar.ogg', 50, 1)
+		playsound(src, 'sound/items/Crowbar.ogg', 50, 1)
 		new /obj/item/mounted/frame/wallmed(src.loc)
 
 		for(var/obj/I in src)
@@ -1674,7 +1750,7 @@ var/global/num_vending_terminals = 1
 				to_chat(usr, "You begin removing screws from \the [src] backplate...")
 				if(do_after(user, src, 50))
 					to_chat(usr, "<span class='notice'>You unscrew \the [src] from the wall.</span>")
-					playsound(get_turf(src), 'sound/items/Screwdriver.ogg', 50, 1)
+					playsound(src, 'sound/items/Screwdriver.ogg', 50, 1)
 					new /obj/item/mounted/frame/wallmed(get_turf(src))
 					qdel(src)
 				return 1
@@ -1688,7 +1764,7 @@ var/global/num_vending_terminals = 1
 					if(user.drop_item(C, src))
 						to_chat(usr, "<span class='notice'>You secure \the [C]!</span>")
 						_circuitboard=C
-						playsound(get_turf(src), 'sound/effects/pop.ogg', 50, 0)
+						playsound(src, 'sound/effects/pop.ogg', 50, 0)
 						build++
 						update_icon()
 				return 1
@@ -1696,7 +1772,7 @@ var/global/num_vending_terminals = 1
 			if(iscrowbar(W))
 				to_chat(usr, "You begin to pry out \the [W] into \the [src].")
 				if(do_after(user, src, 10))
-					playsound(get_turf(src), 'sound/effects/pop.ogg', 50, 0)
+					playsound(src, 'sound/effects/pop.ogg', 50, 0)
 					build--
 					update_icon()
 					var/obj/item/weapon/circuitboard/C
@@ -1713,7 +1789,7 @@ var/global/num_vending_terminals = 1
 			if(istype(W, /obj/item/stack/cable_coil))
 				var/obj/item/stack/cable_coil/C=W
 				to_chat(user, "You start adding cables to \the [src]...")
-				playsound(get_turf(src), 'sound/items/Deconstruct.ogg', 50, 1)
+				playsound(src, 'sound/items/Deconstruct.ogg', 50, 1)
 				if(do_after(user, src, 20) && C.amount >= 5)
 					C.use(5)
 					build++
@@ -1734,7 +1810,7 @@ var/global/num_vending_terminals = 1
 				return 1
 			if(isscrewdriver(W))
 				to_chat(user, "You begin to complete \the [src]...")
-				playsound(get_turf(src), 'sound/items/Screwdriver.ogg', 50, 1)
+				playsound(src, 'sound/items/Screwdriver.ogg', 50, 1)
 				if(do_after(user, src, 20))
 					if(!_circuitboard)
 						_circuitboard=new boardtype(src)
@@ -1747,7 +1823,7 @@ var/global/num_vending_terminals = 1
 		if(3) // Waiting for a recharge pack
 			if(isscrewdriver(W))
 				to_chat(user, "You begin to unscrew \the [src]...")
-				playsound(get_turf(src), 'sound/items/Screwdriver.ogg', 50, 1)
+				playsound(src, 'sound/items/Screwdriver.ogg', 50, 1)
 				if(do_after(user, src, 30))
 					build--
 					update_icon()
@@ -1800,6 +1876,8 @@ var/global/num_vending_terminals = 1
 	)
 	icon_state = "sec"
 	icon_deny = "sec-deny"
+	icon_vend = "sec-vend"
+	vend_delay = 14
 	products = list(
 		/obj/item/weapon/handcuffs = 8,
 		/obj/item/weapon/grenade/flashbang = 4,
@@ -1857,6 +1935,8 @@ var/global/num_vending_terminals = 1
 	)
 	icon_state = "nutri"
 	icon_deny = "nutri-deny"
+	icon_vend = "nutri-vend"
+	vend_delay = 26
 	products = list(
 		/obj/item/weapon/reagent_containers/food/snacks/beezeez = 20,
 		/obj/item/weapon/reagent_containers/glass/fertilizer/ez = 35,
@@ -1889,6 +1969,8 @@ var/global/num_vending_terminals = 1
 		"Aw h'yeah son!"
 	)
 	icon_state = "seeds"
+	icon_vend = "seeds-vend"
+	vend_delay = 13
 	products = list(
 		/obj/item/seeds/bananaseed = 3,
 		/obj/item/seeds/berryseed = 3,
@@ -1962,7 +2044,7 @@ var/global/num_vending_terminals = 1
 		/obj/item/seeds/aloe = 3,
 		/obj/item/seeds/pitcher = 3,
 		/obj/item/seeds/vaporsac = 3,
-		/obj/item/seeds/dionanode = 3
+		/obj/item/seeds/mushroommanspore = 3
 		)
 	contraband = list(
 		/obj/item/seeds/eggyseed = 2,
@@ -2045,6 +2127,7 @@ var/global/num_vending_terminals = 1
 		"You don't really need these..."
 	)
 	icon_state = "dinnerware"
+	icon_vend = "dinnerware-vend"
 	products = list(
 		/obj/item/weapon/tray = 8,
 		/obj/item/weapon/kitchen/utensil/fork = 6,
@@ -2073,6 +2156,7 @@ var/global/num_vending_terminals = 1
 	name = "\improper BODA"
 	desc = "An old vending machine containing sweet water."
 	icon_state = "sovietsoda"
+	icon_vend = "sovietsoda-vend"
 	product_slogans = list(
 		"BODA: We sell drink.",
 		"BODA: Drink today.",
@@ -2107,7 +2191,8 @@ var/global/num_vending_terminals = 1
 	//req_access = list(access_maint_tunnels)
 	icon_state = "tool"
 	icon_deny = "tool-deny"
-
+	icon_vend = "tool-vend"
+	vend_delay = 11
 	products = list(
 		/obj/item/stack/cable_coil/random = 10,
 		/obj/item/weapon/crowbar = 5,
@@ -2136,6 +2221,8 @@ var/global/num_vending_terminals = 1
 	req_access = list(access_engine_equip)//Engineering Equipment access
 	icon_state = "engivend"
 	icon_deny = "engivend-deny"
+	icon_vend = "engivend-vend"
+	vend_delay = 21
 	products = list(
 		/obj/item/clothing/glasses/scanner/meson = 2,
 		/obj/item/clothing/glasses/scanner/material = 2,
@@ -2200,28 +2287,6 @@ var/global/num_vending_terminals = 1
 	)
 
 	pack = /obj/structure/vendomatpack/building
-
-/obj/item/stack/sheet/metal/bigstack/New()
-	getFromPool(/obj/item/stack/sheet/metal, loc, 20)
-	qdel(src)
-/obj/item/stack/sheet/glass/glass/bigstack/New()
-	getFromPool(/obj/item/stack/sheet/glass/glass, loc, 20)
-	qdel(src)
-/obj/item/stack/sheet/glass/plasmaglass/bigstack/New()
-	getFromPool(/obj/item/stack/sheet/glass/plasmaglass, loc, 20)
-	qdel(src)
-/obj/item/stack/sheet/wood/bigstack/New()
-	getFromPool(/obj/item/stack/sheet/wood, loc, 20)
-	qdel(src)
-/obj/item/stack/tile/carpet/bigstack/New()
-	getFromPool(/obj/item/stack/tile/carpet, loc, 20)
-	qdel(src)
-/obj/item/stack/tile/arcade/bigstack/New()
-	getFromPool(/obj/item/stack/tile/arcade, loc, 20)
-	qdel(src)
-/obj/item/stack/sheet/mineral/plastic/bigstack/New()
-	getFromPool(/obj/item/stack/sheet/mineral/plastic, loc, 20)
-	qdel(src)
 
 //This one's from bay12
 /obj/machinery/vending/engineering
@@ -2421,6 +2486,7 @@ var/global/num_vending_terminals = 1
 		/obj/item/clothing/under/franksuit = 3,
 		/obj/item/clothing/gloves/frankgloves = 3,
 		/obj/item/clothing/shoes/frankshoes =3,
+		/obj/item/clothing/suit/kimono/sakura = 3
 		) //Pretty much everything that had a chance to spawn.
 	contraband = list(
 		/obj/item/clothing/suit/cardborg = 3,
@@ -2448,7 +2514,7 @@ var/global/num_vending_terminals = 1
 		/obj/item/clothing/under/darkholme = 3,
 		/obj/item/clothing/suit/wizrobe/magician/fake = 3,
 		/obj/item/clothing/head/wizard/magician = 3,
-		/obj/item/clothing/suit/sakura_kimono = 3,
+		/obj/item/clothing/suit/kimono = 3,
 		/obj/item/clothing/gloves/white = 3,
 		)
 
@@ -2890,6 +2956,7 @@ var/global/num_vending_terminals = 1
 		/obj/item/clothing/head/clockwork_hood = 2,
 		/obj/item/clothing/suit/clockwork_robes = 2,
 		/obj/item/clothing/shoes/clockwork_boots = 2,
+		/obj/item/clothing/suit/kimono/ronin = 2
 		)
 	premium = list(
 		/obj/item/weapon/reagent_containers/food/drinks/bottle/holywater = 1,
@@ -2915,12 +2982,14 @@ var/global/num_vending_terminals = 1
 		/obj/item/clothing/suit/storage/trader = 3,
 		/obj/item/device/pda/trader = 3,
 		/obj/item/weapon/capsule = 60,
+		/obj/item/weapon/implantcase/peace = 5,
 		/obj/item/vaporizer = 1,
 		)
 	prices = list(
 		/obj/item/clothing/suit/storage/trader = 100,
 		/obj/item/device/pda/trader = 100,
 		/obj/item/weapon/capsule = 10,
+		/obj/item/weapon/implantcase/peace = 100,
 		/obj/item/vaporizer = 100
 		)
 
@@ -2935,17 +3004,17 @@ var/global/num_vending_terminals = 1
 		/obj/item/weapon/reagent_containers/food/snacks/borer_egg,
 		/obj/item/clothing/shoes/clown_shoes/advanced,
 		/obj/item/fish_eggs/seadevil,
+		/obj/machinery/power/antiquesynth,
 		)
 
 /obj/machinery/vending/trader/New()
 
-	premium.Add(pick(existing_typesof(/obj/item/borg/upgrade) - /obj/item/borg/upgrade/magnetic_gripper)) //A random borg upgrade minus the magnetic gripper. Time to jew the silicons!
-
 	for(var/random_items = 1 to premium.len - 5)
 		premium.Remove(pick(premium))
-
 	if(premium.Find(/obj/item/weapon/disk/shuttle_coords/vault/mecha_graveyard))
 		load_dungeon(/datum/map_element/dungeon/mecha_graveyard)
+	premium.Add(pick(existing_typesof(/obj/item/borg/upgrade) - /obj/item/borg/upgrade/magnetic_gripper)) //A random borg upgrade minus the magnetic gripper. Time to jew the silicons!
+
 	..()
 
 /obj/machinery/vending/barber
@@ -3071,6 +3140,7 @@ var/global/num_vending_terminals = 1
 	name = "Sales"
 	desc = "Buy, sell, repeat."
 	icon_state = "sale"
+	is_custom_machine = TRUE
 	//vend_reply = "Insert another joke here"
 	//product_ads = "Another joke here"
 	//product_slogans = "Jokes"

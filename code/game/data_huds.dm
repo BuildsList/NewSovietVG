@@ -56,7 +56,7 @@ proc/process_med_hud(var/mob/M, var/mob/eye)
 
 		holder = patient.hud_list[HEALTH_HUD]
 		if(holder)
-			if(patient.stat == 2)
+			if(patient.isDead())
 				holder.icon_state = "hudhealth-100"
 			else
 				holder.icon_state = "hud[RoundHealth(patient.health)]"
@@ -64,7 +64,7 @@ proc/process_med_hud(var/mob/M, var/mob/eye)
 
 		holder = patient.hud_list[STATUS_HUD]
 		if(holder)
-			if(patient.stat == 2)
+			if(patient.isDead())
 				holder.icon_state = "huddead"
 			else if(patient.status_flags & XENO_HOST)
 				holder.icon_state = "hudxeno"
@@ -120,7 +120,6 @@ proc/process_sec_hud(var/mob/M, var/advanced_mode,var/mob/eye)
 					else
 						continue
 					C.images += holder
-					break
 
 		var/perpname = perp.get_face_name()
 		if(lowertext(perpname) == "unknown" || !perpname)

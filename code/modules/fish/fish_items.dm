@@ -84,7 +84,7 @@ var/list/fish_items_list = list("goldfish" = /obj/item/weapon/fish/goldfish,
 /obj/item/weapon/reagent_containers/food/snacks/shrimp/New()
 	..()
 	desc = pick("Anyway, like I was sayin', shrimp is the fruit of the sea.", "You can barbecue it, boil it, broil it, bake it, saute it.")
-	reagents.add_reagent("NUTRIMENT", 1)
+	reagents.add_reagent(NUTRIMENT, 1)
 
 /obj/item/weapon/reagent_containers/food/snacks/feederfish
 	name = "feeder fish"
@@ -96,7 +96,7 @@ var/list/fish_items_list = list("goldfish" = /obj/item/weapon/fish/goldfish,
 
 /obj/item/weapon/reagent_containers/food/snacks/feederfish/New()
 	..()
-	reagents.add_reagent("NUTRIMENT", 1)
+	reagents.add_reagent(NUTRIMENT, 1)
 
 /obj/item/weapon/fish
 	name = "fish"
@@ -116,6 +116,7 @@ var/list/fish_items_list = list("goldfish" = /obj/item/weapon/fish/goldfish,
 	name = "glofish"
 	desc = "A small bio-luminescent fish. Not very bright, but at least it's pretty!"
 	icon_state = "glofish"
+	meat_type = /obj/item/weapon/reagent_containers/food/snacks/glofishmeat
 
 /obj/item/weapon/fish/glofish/New()
 	..()
@@ -171,6 +172,7 @@ var/list/fish_items_list = list("goldfish" = /obj/item/weapon/fish/goldfish,
 	name = "goldfish"
 	desc = "A goldfish, just like the one you never won at the county fair."
 	icon_state = "goldfish"
+	meat_type = /obj/item/weapon/reagent_containers/food/snacks/goldfishmeat
 
 /obj/item/weapon/fish/salmon
 	name = "salmon"

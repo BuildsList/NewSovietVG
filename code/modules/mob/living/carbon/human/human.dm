@@ -95,6 +95,10 @@
 
 	update_body()
 
+/mob/living/carbon/human/mushroom/New(var/new_loc, delay_ready_dna = 0)
+	h_style = "Bald"
+	..(new_loc, "Mushroom")
+
 /mob/living/carbon/human/generate_static_overlay()
 	if(!istype(static_overlays,/list))
 		static_overlays = list()
@@ -112,11 +116,6 @@
 	static_overlays["letter"] = static_overlay
 
 /mob/living/carbon/human/New(var/new_loc, var/new_species_name = null, var/delay_ready_dna=0)
-	if(!hair_styles_list.len)
-		buildHairLists()
-	if(!all_species.len)
-		buildSpeciesLists()
-
 	if(new_species_name)
 		s_tone = random_skin_tone(new_species_name)
 	multicolor_skin_r = rand(0,255)	//Only used when the human has a species datum with the MULTICOLOR anatomical flag
@@ -255,9 +254,6 @@
 			stat("Spacepod Charge", "[istype(S.battery) ? "[S.battery.charge] / [S.battery.maxcharge]" : "No cell detected"]")
 			stat("Spacepod Integrity", "[!S.health ? "0" : "[(S.health / initial(S.health)) * 100]"]%")
 
-/mob/living/carbon/human/attack_animal(mob/living/simple_animal/M as mob)
-	M.unarmed_attack_mob(src)
-
 /mob/living/carbon/human/proc/is_loyalty_implanted(mob/living/carbon/human/M)
 	for(var/L in M.contents)
 		if(istype(L, /obj/item/weapon/implant/loyalty))
@@ -346,9 +342,9 @@
 	return
 //repurposed proc. Now it combines get_id_name() and get_face_name() to determine a mob's name variable. Made into a seperate proc as it'll be useful elsewhere
 /mob/living/carbon/human/proc/get_visible_name()
-	if( wear_mask && (is_slot_hidden(wear_mask.body_parts_covered,HIDEFACE)))	//Wearing a mask which hides our face, use id-name if possible
+	if( wear_mask && wear_mask.is_hidden_identity())	//Wearing a mask which hides our face, use id-name if possible
 		return get_id_name("Unknown")
-	if( head && (is_slot_hidden(head.body_parts_covered,HIDEFACE)))
+	if( head && head.is_hidden_identity())
 		return get_id_name("Unknown")	//Likewise for hats
 	if(mind && mind.vampire && (VAMP_SHADOW in mind.vampire.powers) && mind.vampire.ismenacing)
 		return get_id_name("Unknown")
@@ -360,7 +356,7 @@
 //Returns "Unknown" if facially disfigured and real_name if not. Useful for setting name when polyacided or when updating a human's name variable
 /mob/living/carbon/human/proc/get_face_name()
 	var/datum/organ/external/head/head_organ = get_organ(LIMB_HEAD)
-	if((wear_mask && (is_slot_hidden(wear_mask.body_parts_covered,HIDEFACE))) || ( head && (is_slot_hidden(head.body_parts_covered,HIDEFACE))) || !head_organ || head_organ.disfigured || (head_organ.status & ORGAN_DESTROYED) || !real_name || (M_HUSK in mutations) )	//Wearing a mask which hides our face, use id-name if possible
+	if((wear_mask && wear_mask.is_hidden_identity() ) || ( head && head.is_hidden_identity() ) || !head_organ || head_organ.disfigured || (head_organ.status & ORGAN_DESTROYED) || !real_name || (M_HUSK in mutations) )	//Wearing a mask which hides our face, use id-name if possible
 		return "Unknown"
 	return real_name
 
@@ -721,7 +717,7 @@
 					src.visible_message("<span class='warning'>[src] throws up!</span>","<span class='danger'>You throw up!</span>")
 					spawn_vomit_on_floor = 1
 
-			playsound(get_turf(loc), 'sound/effects/splat.ogg', 50, 1)
+			playsound(loc, 'sound/effects/splat.ogg', 50, 1)
 
 			if(spawn_vomit_on_floor)
 				if(istype(location, /turf/simulated))
@@ -1122,8 +1118,9 @@
 		if(src.species.abilities)
 			src.verbs -= species.abilities
 		if(species.spells)
-			for(var/spell in species.spells)
-				remove_spell(spell)
+			for(var/spell/spell in spell_list)
+				if(spell.type in species.spells)
+					remove_spell(spell)
 		for(var/L in species.known_languages)
 			remove_language(L)
 		species.clear_organs(src)
@@ -1147,6 +1144,18 @@
 			add_spell(spell, "racial_spell_ready", /obj/abstract/screen/movable/spell_master/racial)
 	if(force_organs || !src.organs || !src.organs.len)
 		src.species.create_organs(src)
+	else
+		for(var/datum/organ/external/current_organ in organs)
+			if(species.anatomy_flags & NO_BLOOD)
+				current_organ.status &= ~ORGAN_BLEEDING
+			if(species.anatomy_flags & NO_BONES)
+				current_organ.status &= ~ORGAN_BROKEN
+				current_organ.status &= ~ORGAN_SPLINTED
+			if(species.anatomy_flags & NO_STRUCTURE && current_organ.status & ORGAN_DESTROYED)
+				current_organ.status |= ORGAN_ATTACHABLE
+				current_organ.amputated = 1
+				current_organ.setAmputatedTree()
+				current_organ.open = 0
 	var/datum/organ/internal/eyes/E = src.internal_organs_by_name["eyes"]
 	if(E)
 		src.see_in_dark = E.see_in_dark //species.darksight
@@ -1161,6 +1170,8 @@
 		src.dna.species = new_species_name
 		src.species.handle_post_spawn(src)
 		src.update_icons()
+		if(species.species_intro)
+			to_chat(src, "<span class = 'notice'>[species.species_intro]</span>")
 	return 1
 
 /mob/living/carbon/human/proc/bloody_doodle()
@@ -1426,6 +1437,22 @@
 	make_robot_limbs_organic()
 	make_robot_internals_organic()
 
+// Makes all limbs robotic.
+/mob/living/carbon/human/proc/make_organic_limbs_robotic()
+	for(var/datum/organ/external/O in organs)
+		O.robotize()
+	update_icons()
+
+// Makes all internal organs robotic.
+/mob/living/carbon/human/proc/make_organic_internals_robotic()
+	for(var/datum/organ/internal/O in organs)
+		O.robotic = TRUE
+
+// Makes all organs, internal and external, robotic.
+/mob/living/carbon/human/proc/make_all_organic_parts_robotic()
+	make_organic_limbs_robotic()
+	make_organic_internals_robotic()
+
 /mob/living/carbon/human/proc/set_attack_type(new_type = NORMAL_ATTACK)
 	kick_icon.icon_state = "act_kick"
 	bite_icon.icon_state = "act_bite"
@@ -1543,7 +1570,8 @@
 		plane = LYING_HUMAN_PLANE
 	else
 		plane = HUMAN_PLANE
-	if(istype(areaMaster) && areaMaster.project_shadows)
+	var/area/this_area = get_area(src)
+	if(istype(this_area) && this_area.project_shadows)
 		update_shadow()
 
 /mob/living/carbon/human/set_hand_amount(new_amount) //Humans need hand organs to use the new hands. This proc will give them some
@@ -1744,10 +1772,10 @@ mob/living/carbon/human/remove_internal_organ(var/mob/living/user, var/datum/org
 
 /mob/living/carbon/human/can_show_flavor_text()
 	// Wearing a mask...
-	if(wear_mask && is_slot_hidden(wear_mask.body_parts_covered, HIDEFACE))
+	if(wear_mask && wear_mask.is_hidden_identity())
 		return FALSE
 	// Or having a headpiece that protects your face...
-	if(head && is_slot_hidden(head.body_parts_covered, HIDEFACE))
+	if(head && head.is_hidden_identity())
 		return FALSE
 	// Or lacking a head, or being disfigured...
 	var/datum/organ/external/head/limb_head = get_organ(LIMB_HEAD)
@@ -1760,6 +1788,7 @@ mob/living/carbon/human/remove_internal_organ(var/mob/living/user, var/datum/org
 	return TRUE
 
 /mob/living/carbon/human/proc/make_zombie(mob/master, var/retain_mind = TRUE)
+	ghostize()
 	var/mob/living/simple_animal/hostile/necro/zombie/turned/T = new(get_turf(src), master, (retain_mind ? mind : null))
 	T.get_clothes(src, T)
 	T.name = real_name
@@ -1782,5 +1811,8 @@ mob/living/carbon/human/remove_internal_organ(var/mob/living/user, var/datum/org
 		if(HUD_MEDICAL)
 			return istype(glasses, /obj/item/clothing/glasses/hud/health)
 		if(HUD_SECURITY)
+			if(istype(glasses, /obj/item/clothing/glasses/sunglasses/sechud/syndishades))
+				var/obj/item/clothing/glasses/sunglasses/sechud/syndishades/S = glasses
+				return S.full_access
 			return is_type_in_list(glasses, list(/obj/item/clothing/glasses/hud/security, /obj/item/clothing/glasses/sunglasses/sechud))
 	return FALSE

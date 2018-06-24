@@ -8,7 +8,7 @@
 
 	regular_hud_updates()
 
-	update_action_buttons()
+	update_action_buttons_icon()
 
 	if(stat == UNCONSCIOUS && health <= config.health_threshold_crit)
 		var/severity = 0
@@ -290,7 +290,7 @@
 		var/masked = 0
 
 		if(head)
-			if(istype(head, /obj/item/clothing/head/welding) || istype(head, /obj/item/clothing/head/helmet/space/unathi) || /datum/action/item_action/toggle_helmet_mask in head.actions_types)
+			if(istype(head, /obj/item/clothing/head/welding) || istype(head, /obj/item/clothing/head/helmet/space/unathi) || (/datum/action/item_action/toggle_helmet_mask in head.actions_types))
 				var/enable_mask = TRUE
 
 				var/datum/action/item_action/toggle_helmet_mask/action = locate(/datum/action/item_action/toggle_helmet_mask) in head.actions
@@ -299,7 +299,7 @@
 					enable_mask = !action.up
 				else
 					var/obj/item/clothing/head/welding/O = head
-					enable_mask = O.up
+					enable_mask = !O.up
 
 				if(enable_mask && tinted_weldhelh)
 					overlay_fullscreen("tint", /obj/abstract/screen/fullscreen/impaired, 2)

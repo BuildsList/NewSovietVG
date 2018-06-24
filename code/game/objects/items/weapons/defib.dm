@@ -22,7 +22,7 @@
 
 /obj/item/weapon/melee/defibrillator/suicide_act(mob/user)
 	to_chat(viewers(user), "<span class='warning'>[user] is putting the live paddles on \his chest! It looks like \he's trying to commit suicide.</span>")
-	playsound(get_turf(src),'sound/items/defib.ogg',50,1)
+	playsound(src,'sound/items/defib.ogg',50,1)
 	return (FIRELOSS)
 
 /obj/item/weapon/melee/defibrillator/update_icon()
@@ -47,7 +47,7 @@
 		if(clumsy_check(user) && prob(50) && charges)
 			to_chat(user, "<span class='warning'>You touch the paddles together, shorting the device.</span>")
 			spark(src, 5)
-			playsound(get_turf(src),'sound/items/defib.ogg',50,1)
+			playsound(src,'sound/items/defib.ogg',50,1)
 			user.Knockdown(5)
 			var/mob/living/carbon/human/H = user
 			if(ishuman(user))
@@ -57,7 +57,7 @@
 		else
 			ready = !ready
 			to_chat(user, "<span class='notice'>You turn [src] [ready? "on and take the paddles out" : "off and put the paddles back in"].</span>")
-			playsound(get_turf(src),"sparks",75,1,-1)
+			playsound(src,"sparks",75,1,-1)
 			update_icon()
 	else
 		to_chat(user, "<span class='warning'>[src] is out of charges.</span>")
@@ -120,7 +120,7 @@
 		else
 			target.LAssailant = user
 	spark(src, 5, FALSE)
-	playsound(get_turf(src),'sound/items/defib.ogg',50,1)
+	playsound(src,'sound/items/defib.ogg',50,1)
 	charges--
 	update_icon()
 	return
@@ -130,24 +130,24 @@
 	"<span class='notice'>You start setting up the paddles on [target]'s chest</span>")
 	if(do_after(user,target,30))
 		spark(src, 5, FALSE)
-		playsound(get_turf(src),'sound/items/defib.ogg',50,1)
+		playsound(src,'sound/items/defib.ogg',50,1)
 		charges--
 		update_icon()
 		to_chat(user, "<span class='notice'>You shock [target] with the paddles.</span>")
 		var/datum/organ/internal/heart/heart = target.get_heart()
 		if(!heart)
-			to_chat(user, "<span class='warning'>[src] buzzes: Defibrillation failed. Subject requires a heart.</span>")
+			target.visible_message("<span class='warning'>[src] buzzes: Defibrillation failed. Subject requires a heart.</span>")
 			target.apply_damage(rand(1,5),BURN,LIMB_CHEST)
 			return
 		var/datum/organ/external/head/head = target.get_organ(LIMB_HEAD)
 		if(!head || head.status & ORGAN_DESTROYED)
 			target.visible_message("<span class='warning'>[src] buzzes: Defibrillation failed. Severe cranial damage detected.</span>")
 			return
-		if(M_NOCLONE in target.mutations)
+		if((M_HUSK in target.mutations) && (M_NOCLONE in target.mutations))
 			target.visible_message("<span class='warning'>[src] buzzes: Defibrillation failed. Irremediable genetic damage detected.</span>")
 			return
 		if(!target.has_brain())
-			target.visible_message("<span class='warning'>[src] buzzes: Defibrillation failed. No nervous system detected.</span>")
+			target.visible_message("<span class='warning'>[src] buzzes: Defibrillation failed. No central nervous system detected.</span>")
 			return
 		if(target.suiciding)
 			target.visible_message("<span class='warning'>[src] buzzes: Defibrillation failed. Severe nerve trauma detected.</span>") // They suicided so they fried their brain. Space Magic.
@@ -156,7 +156,7 @@
 			target.visible_message("<span class='warning'>[src] buzzes: Defibrillation failed. Please apply on bare skin.</span>")
 			target.apply_damage(rand(1,5),BURN,LIMB_CHEST)
 			return
-		if(istype(target.w_uniform,/obj/item/clothing/under) && (target.wear_suit.body_parts_covered & UPPER_TORSO) && prob(50))
+		if(istype(target.w_uniform,/obj/item/clothing/under) && (target.w_uniform.body_parts_covered & UPPER_TORSO) && prob(50))
 			target.visible_message("<span class='warning'>[src] buzzes: Defibrillation failed. Please apply on bare skin.</span>")
 			target.apply_damage(rand(1,5),BURN,LIMB_CHEST)
 			return
@@ -168,10 +168,10 @@
 					ghostmob << 'sound/effects/adminhelp.ogg'
 					to_chat(ghostmob, "<span class='interface big'><span class='bold'>Someone is trying to revive your body. Return to it if you want to be resurrected!</span> \
 						(Verbs -> Ghost -> Re-enter corpse, or <a href='?src=\ref[ghost];reentercorpse=1'>click here!</a>)</span>")
-					to_chat(user, "<span class='warning'>[src] buzzes: Defibrillation failed. Vital signs are too weak, please try again in five seconds.</span>")
+					target.visible_message(user, "<span class='warning'>[src] buzzes: Defibrillation failed. Vital signs are too weak, please try again in five seconds.</span>")
 					return
 			//we couldn't find a suitable ghost.
-			target.visible_message("<span class='warning'>[src] buzzes: Defibrillation failed. No brain waves detected.</span>")
+			target.visible_message("<span class='warning'>[src] buzzes: Defibrillation failed. No brainwaves detected.</span>")
 			return
 		if(prob(25))
 			heart.damage += 5 //Allow the defibrilator to possibly worsen heart damage. Still rare enough to just be the "clone damage" of the defib
