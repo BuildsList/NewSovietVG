@@ -56,8 +56,11 @@ var/list/uplink_items = list()
 	var/list/job = null
 	var/only_on_month	//two-digit month as string
 	var/only_on_day		//two-digit day as string
-	var/unique = FALSE	// Can only be bought once, globally
+	var/num_in_stock = 0	// Number of times this can be bought, globally. 0 is infinite
 	var/static/times_bought = 0
+	var/refundable = FALSE
+	var/refund_amount // specified refund amount in case there needs to be a TC penalty for refunds.
+
 
 /datum/uplink_item/proc/spawn_item(var/turf/loc, var/obj/item/device/uplink/U, mob/user)
 	U.uses -= max(cost, 0)
@@ -77,8 +80,8 @@ var/list/uplink_items = list()
 	if (!( istype(user, /mob/living/carbon/human)))
 		return 0
 
-	if(unique && times_bought >= 1)
-		to_chat(user, "<span class='warning'>This item is not available anymore.</span>")
+	if(num_in_stock && times_bought >= num_in_stock)
+		to_chat(user, "<span class='warning'>This item is out of stock.</span>")
 		return 0
 
 	// If the uplink's holder is in the user's contents
@@ -273,6 +276,13 @@ var/list/uplink_items = list()
 	cost = 4
 	job = list("Botanist")
 
+/datum/uplink_item/jobspecific/hornetqueen
+	name = "Hornet Queen Packet"
+	desc = "Place her into an apiary tray, add a few packs of BeezEez, then lay it inside your nemesis' office. Surprise guaranteed. Protective gear won't be enough to shield you reliably from these."
+	item = /obj/item/queen_bee/hornet
+	cost = 2
+	job = list("Botanist")
+
 //Chef
 /datum/uplink_item/jobspecific/specialsauce
 	name = "Chef Excellence's Special Sauce"
@@ -349,6 +359,13 @@ var/list/uplink_items = list()
 	item = /obj/item/weapon/storage/box/syndie_kit/lethal_hyperzine
 	cost = 4
 	job = list("Chemist", "Medical Doctor", "Chief Medical Officer")
+
+/datum/uplink_item/jobspecific/organ_remover
+	name = "Modified Organics Extractor"
+	desc = "A tool used by vox raiders to extract organs from unconscious victims has been reverse-engineered by syndicate scientists to be used by anyone, but it cannot extract hearts. It works twice as fast as the vox-only variant. Click on it to select the type of organ to extract, and then select the appropiate body zone."
+	item = /obj/item/weapon/organ_remover/traitor
+	cost = 6
+	job = list("Medical Doctor", "Chief Medical Officer")
 
 //Engineer
 /datum/uplink_item/jobspecific/powergloves
@@ -713,8 +730,16 @@ var/list/uplink_items = list()
 	name = "\"Does Not Tip\" database backdoor"
 	desc = "Lets you add or remove your station to the \"does not tip\" list kept by the cargo workers at Central Command. You can be sure all pizza orders will be poisoned from the moment the screen flashes red."
 	item = /obj/item/device/does_not_tip_backdoor
-	unique = TRUE
+	num_in_stock = 1
 	cost = 10
+
+//datum/uplink_item/dangerous/robot
+//	name = "Syndicate Robot Teleporter"
+//	desc = "A single-use teleporter used to deploy a syndicate robot that will help with your mission. Keep in mind that unlike NT cyborgs/androids these don't have access to most of the station's machinery."
+//	item = /obj/item/weapon/robot_spawner/syndicate
+//	cost = 40
+//	gamemodes = list("nuclear emergency")
+//	refundable = TRUE
 
 // IMPLANTS
 

@@ -1,15 +1,15 @@
 
-/datum/dna/gene/disability/speech/loud
+/datum/dna/gene/disability/loud
 	name = "Loud"
 	desc = "Forces the speaking centre of the subjects brain to yell every sentence."
 	activation_message = "YOU FEEL LIKE YELLING!"
 	deactivation_message = "You feel like being quiet.."
 
-/datum/dna/gene/disability/speech/loud/New()
+/datum/dna/gene/disability/loud/New()
 		..()
-		block=LOUDBLOCK
+	block = LOUDBLOCK
 
-/datum/dna/gene/disability/speech/loud/OnSay(var/mob/M, var/datum/speech/speech)
+/datum/dna/gene/disability/loud/OnSay(var/mob/M, var/datum/speech/speech)
 		speech.message = replacetext(speech.message,".","!")
 		speech.message = replacetext(speech.message,"?","?!")
 		speech.message = replacetext(speech.message,"!","!!")
@@ -17,23 +17,23 @@
 		speech.message = uppertext_alt(speech.message)
 
 
-/datum/dna/gene/disability/speech/whisper
+/datum/dna/gene/disability/whisper
 	name = "Quiet"
 	desc = "Damages the subjects vocal cords"
 	activation_message = "<i>Your throat feels sore..</i>"
 	deactivation_message = "You feel fine again."
 
-/datum/dna/gene/disability/speech/whisper/New()
+/datum/dna/gene/disability/whisper/New()
 	..()
 	block=WHISPERBLOCK
 
-/datum/dna/gene/disability/speech/whisper/can_activate(var/mob/M,var/flags)
+/datum/dna/gene/disability/whisper/can_activate(var/mob/M,var/flags)
 	// No loud whispering.
 	if(M_LOUD in M.mutations)
 		return 0
 	return ..(M,flags)
 
-/datum/dna/gene/disability/speech/whisper/OnSay(var/mob/M, var/datum/speech/speech)
+/datum/dna/gene/disability/whisper/OnSay(var/mob/M, var/datum/speech/speech)
 	//M.whisper(message)
 	return 0
 
@@ -45,29 +45,28 @@
 	deactivation_message = "You regain your balance."
 	flags = GENE_UNNATURAL
 
-	New()
+/datum/dna/gene/disability/dizzy/New()
 		..()
 		block=DIZZYBLOCK
 
-
-	OnMobLife(var/mob/living/carbon/human/M)
+/datum/dna/gene/disability/dizzy/OnMobLife(var/mob/living/carbon/human/M)
 		if(!istype(M))
 			return
 		if(M_DIZZY in M.mutations)
 			M.Dizzy(300)
 
 
-/datum/dna/gene/disability/speech/sans
+/datum/dna/gene/disability/sans
 	name = "Wacky"
 	desc = "Forces the subject to talk in an odd manner."
 	activation_message = "You feel an off sensation in your voicebox.."
 	deactivation_message = "The off sensation passes.."
 
-	New()
+/datum/dna/gene/disability/sans/New()
 		..()
 		block=SANSBLOCK
 
-	OnSay(var/mob/M, var/datum/speech/speech)
+/datum/dna/gene/disability/sans/OnSay(var/mob/M, var/datum/speech/speech)
 		speech.message_classes.Add("sans") // SPEECH 2.0!!!1
 
 /datum/dna/gene/disability/veganism
@@ -78,7 +77,7 @@
 
 	mutation = M_VEGAN
 
-	var/global/static/list/nonvegan_reagents = list(
+	var/static/list/nonvegan_reagents = list(
 	HONEY,
 	//Milk-based products
 	MILK,
@@ -131,7 +130,6 @@
 	..()
 	block = ASTHMABLOCK
 
-
 var/list/milk_reagents = list(
 		MILK,
 		CREAM,
@@ -159,8 +157,8 @@ var/list/milk_reagents = list(
 /datum/dna/gene/disability/lactose
 	name = "Lactose intolerance"
 	desc = "A condition where your body is unable to digest Lactose, a sugar commonly found in milk."
-	activation_message = ""
-	deactivation_message = ""
+	activation_message = "Your stomach feels upset and bloated."
+	deactivation_message = "The discomfort in your stomach fades away."
 	disability = LACTOSE
 
 	mutation = M_LACTOSE

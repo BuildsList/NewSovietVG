@@ -207,6 +207,7 @@ var/list/department_radio_keys = list(
 		message = copytext(message, 2)
 	else if(message_mode)
 		say_testing(src, "Message mode is [message_mode]")
+		if(message_mode != MODE_HOLOPAD)
 		message = copytext(message, 3)
 
 	// SAYCODE 90.0!
@@ -349,7 +350,7 @@ var/list/department_radio_keys = list(
 	if(!message)
 		return
 
-	if(sdisabilities & MUTE)
+	if(is_mute())
 		return
 
 	if(is_muzzled())
@@ -361,7 +362,7 @@ var/list/department_radio_keys = list(
 	return 1
 
 /mob/living/proc/check_emote(message)
-	if(copytext(message, 1, 2) == "*")
+	if(copytext(message, 1, 2) == "*" && is_letter(text2ascii(message, 2)))
 		emote(copytext(message, 2))
 		return 1
 
@@ -370,15 +371,18 @@ var/list/department_radio_keys = list(
 	if(copytext(message, 1, 2) == ";")
 		return MODE_HEADSET
 	else if(length(message) > 2)
-		return department_radio_keys[copytext(message, 1, 3)]
+		return department_radio_keys[lowertext(copytext(message, 1, 3))]
 
 /mob/living/proc/handle_inherent_channels(var/datum/speech/speech, var/message_mode)
 	switch(message_mode)
 		if(MODE_CHANGELING)
 			if(lingcheck())
 				var/turf/T = get_turf(src)
-				log_say("[mind.changeling.changelingID]/[key_name(src)] (@[T.x],[T.y],[T.z]) Changeling Hivemind: [lhtml_encode(speech.message)]")
-				var/themessage = text("<i><font color=#800080><b>[]:</b> []</font></i>",mind.changeling.changelingID,lhtml_encode(speech.message))
+				var/datum/role/changeling/C = mind.GetRole(CHANGELING)
+				if(!C)
+					return 0
+				log_say("[C.changelingID]/[key_name(src)] (@[T.x],[T.y],[T.z]) Changeling Hivemind: [lhtml_encode(speech.message)]")
+				var/themessage = text("<i><font color=#800080><b>[]:</b> []</font></i>",C.changelingID,lhtml_encode(speech.message))
 				for(var/mob/M in player_list)
 					if(M.lingcheck() || ((M in dead_mob_list) && !istype(M, /mob/new_player)))
 						handle_render(M,themessage,src)
@@ -475,20 +479,29 @@ var/list/department_radio_keys = list(
 	return 0
 
 /mob/living/lingcheck()
-	if(mind && mind.changeling && !issilicon(src))
+	if(ischangeling(src) && !issilicon(src))
 		return 1
+	return 0
 
 /mob/living/construct_chat_check(var/setting = 0) //setting: 0 is to speak over general into cultchat, 1 is to speak over channel into cultchat, 2 is to hear cultchat
 	if(!mind)
 		return
-
 	if(setting == 0) //overridden for constructs
 		return
+
+	if (iscultist(src))
 	if(setting == 1)
-		if(mind in ticker.mode.cult && universal_cult_chat == 1)
+			if (checkTattoo(TATTOO_CHAT))
 			return 1
 	if(setting == 2)
-		if(mind in ticker.mode.cult)
+			return 1
+
+	var/datum/faction/cult = find_active_faction_by_member(mind.GetRole(LEGACY_CULT))
+	if(cult)
+		if(setting == 1)
+			if(universal_cult_chat == 1)
+				return 1
+		if(setting == 2)
 			return 1
 
 /mob/living/say_quote()

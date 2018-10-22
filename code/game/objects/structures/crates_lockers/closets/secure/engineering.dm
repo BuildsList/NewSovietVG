@@ -34,6 +34,7 @@
 	new /obj/item/weapon/storage/belt/utility/chief(src)
 	new /obj/item/clothing/glasses/scanner/material(src)
 	new /obj/item/clothing/accessory/storage/brown_vest(src)
+	new /obj/item/weapon/card/debit/preferred/department(src, "Engineering")
 
 /obj/structure/closet/secure_closet/engineering_electrical
 	name = "electrical supplies locker"
@@ -191,11 +192,15 @@
 	name = "supermatter shard crate"
 	req_access = list(access_engine_equip)
 	var/payload = /obj/machinery/power/supermatter/shard
-	New()
+	var/mapping_idtag
+
+/obj/structure/closet/crate/secure/large/reinforced/shard/New()
 		..()
 		sleep(2)
 		if(payload)
-			new payload(src)
+		var/obj/machinery/power/supermatter/S = new payload(src)
+		if(mapping_idtag && istype(S))
+			S.id_tag = mapping_idtag
 
 /obj/structure/closet/crate/secure/large/reinforced/shard/Cross(atom/movable/mover, turf/target, height=1.5, air_group = 0)
 	if(istype(mover,/obj/machinery/power/supermatter))

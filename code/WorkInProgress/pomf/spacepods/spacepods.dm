@@ -28,7 +28,8 @@
 	var/next_firetime = 0
 	var/list/pod_overlays
 	var/health = 400
-	appearance_flags = 0
+	var/maxHealth = 400
+	appearance_flags = LONG_GLIDE
 
 	var/datum/delay_controller/move_delayer = new(0.1, ARBITRARILY_LARGE_NUMBER) //See setup.dm, 12
 	var/passenger_fire = 0 //Whether or not a passenger can fire weapons attached to this pod
@@ -41,6 +42,10 @@
 		/datum/action/spacepod/fire_weapons,\
 		/datum/action/spacepod/passenger/assume_control) //Actions to create when a passenger boards, deleted upon leaving
 	var/list/actions = list()
+
+/obj/spacepod/get_cell()
+	return battery
+
 /obj/spacepod/New()
 	. = ..()
 	if(!pod_overlays)
@@ -113,25 +118,17 @@
 
 /obj/spacepod/bullet_act(var/obj/item/projectile/P)
 	if(P.damage && !P.nodamage)
-		deal_damage(P.damage)
+		adjust_health(P.damage)
 
-/obj/spacepod/proc/deal_damage(var/damage)
+/obj/spacepod/proc/adjust_health(var/damage)
 	var/oldhealth = health
-	health = max(0, health - damage)
+	health = Clamp(health-damage,0, maxHealth)
 	var/percentage = (health / initial(health)) * 100
 	if(occupant && oldhealth > health && percentage <= 25 && percentage > 0)
-		var/sound/S = sound('sound/effects/engine_alert2.ogg')
-		S.wait = 0 //No queue
-		S.channel = 0 //Any channel
-		S.volume = 50
-		occupant << S
+		occupant.playsound_local(occupant, 'sound/effects/engine_alert2.ogg', 50, 0, 0, 0, 0)
 	if(occupant && oldhealth > health && !health)
-		var/sound/S = sound('sound/effects/engine_alert1.ogg')
-		S.wait = 0
-		S.channel = 0
-		S.volume = 50
-		occupant << S
-	if(!health)
+		occupant.playsound_local(occupant, 'sound/effects/engine_alert1.ogg', 50, 0, 0, 0, 0)
+	if(health <= 0)
 		spawn(0)
 			if(occupant)
 				to_chat(occupant, "<big><span class='warning'>Critical damage to the vessel detected, core explosion imminent!</span></big>")
@@ -162,15 +159,23 @@
 			ion_trail = null // Should be nulled by qdel src in next line but OH WELL
 			qdel(src)
 		if(2)
-			deal_damage(100)
+			adjust_health(100)
 		if(3)
 			if(prob(40))
-				deal_damage(50)
+				adjust_health(50)
 
-/obj/spacepod/attackby(obj/item/W as obj, mob/user as mob)
+/obj/spacepod/attackby(obj/item/W, mob/user)
 	if(iscrowbar(W))
 		hatch_open = !hatch_open
 		to_chat(user, "<span class='notice'>You [hatch_open ? "open" : "close"] the maintenance hatch.</span>")
+		return
+	if(health < maxHealth && iswelder(W))
+		var/obj/item/weapon/weldingtool/WT = W
+		if(WT.do_weld(user, src, 30, 5))
+			to_chat(user, "<span class='notice'>You patch up \the [src].</span>")
+			adjust_health(-rand(15,30))
+			return
+
 	if(istype(W, /obj/item/weapon/cell))
 		if(!hatch_open)
 			return ..()
@@ -200,6 +205,12 @@
 					equipment_system.weapon_system.my_atom = src
 					//new/obj/item/device/spacepod_equipment/weaponry/proc/fire_weapon_system(src, equipment_system.weapon_system.verb_name, equipment_system.weapon_system.verb_desc) //Yes, it has to be referenced like that. W.verb_name/desc doesn't compile.
 					return
+
+	if(W.force)
+		visible_message("<span class = 'warning'>\The [user] hits \the [src] with \the [W]</span>")
+		adjust_health(W.force)
+		W.on_attack(src, user)
+
 
 /obj/spacepod/attack_hand(mob/user as mob)
 	if(!hatch_open)
@@ -250,8 +261,6 @@
 				to_chat(user, "<span class='warning'>You need an open hand to do that.</span>")
 		*/
 
-	return
-
 /obj/spacepod/civilian
 	icon_state = "pod_civ"
 	desc = "A sleek civilian space pod."
@@ -290,8 +299,9 @@
 	cabin_air = new
 	cabin_air.temperature = T20C
 	cabin_air.volume = 200
-	cabin_air.oxygen = O2STANDARD*cabin_air.volume/(R_IDEAL_GAS_EQUATION*cabin_air.temperature)
-	cabin_air.nitrogen = N2STANDARD*cabin_air.volume/(R_IDEAL_GAS_EQUATION*cabin_air.temperature)
+	cabin_air.adjust_multi(
+		GAS_OXYGEN, O2STANDARD*cabin_air.volume/(R_IDEAL_GAS_EQUATION*cabin_air.temperature),
+		GAS_NITROGEN, N2STANDARD*cabin_air.volume/(R_IDEAL_GAS_EQUATION*cabin_air.temperature))
 	return cabin_air
 
 /obj/spacepod/proc/add_airtank()
@@ -338,13 +348,17 @@
 			. = t_air.return_temperature()
 	return
 
-/obj/spacepod/MouseDrop_T(mob/M as mob, mob/user as mob)
+/obj/spacepod/MouseDropTo(mob/M, mob/user)
 	if(M != user)
+		return
+	if(!Adjacent(M) || !Adjacent(user))
 		return
 	move_inside(M, user)
 
-/obj/spacepod/MouseDrop(atom/over)
+/obj/spacepod/MouseDropFrom(atom/over)
 	if(!usr || !over)
+		return
+	if(!Adjacent(usr) || !Adjacent(over))
 		return
 	if(occupant != usr && !passengers.Find(usr))
 		return ..() //Handle mousedrop T

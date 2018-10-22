@@ -30,7 +30,9 @@ MATCHBOXES ARE ALSO IN FANCY.DM
 	source_temperature = TEMPERATURE_FLAME
 	w_class = W_CLASS_TINY
 	origin_tech = Tc_MATERIALS + "=1"
-	attack_verb = list("burns", "singes")
+	var/list/unlit_attack_verb = list("prods", "pokes")
+	var/list/lit_attack_verb = list("burns", "singes")
+	attack_verb = list("prods", "pokes")
 	light_color = LIGHT_COLOR_FIRE
 
 /obj/item/weapon/match/New()
@@ -60,16 +62,19 @@ MATCHBOXES ARE ALSO IN FANCY.DM
 			item_state = "[initial(item_state)]on"
 			icon_state = "[initial(icon_state)]_lit"
 			damtype = BURN
+			attack_verb = lit_attack_verb
 		if(0)
 			name = "[initial(name)]"
 			item_state = "[initial(item_state)]off"
 			icon_state = "[initial(icon_state)]_unlit"
 			damtype = BRUTE
+			attack_verb = unlit_attack_verb
 		if(-1)
 			name = "burnt [initial(name)]"
 			item_state = "[initial(item_state)]off"
 			icon_state = "[initial(icon_state)]_burnt"
 			damtype = BRUTE
+			attack_verb = unlit_attack_verb
 
 /obj/item/weapon/match/proc/update_brightness()
 	if(lit == 1) //I wish I didn't need the == 1 part, but Dreamkamer is a dumb puppy
@@ -89,7 +94,7 @@ MATCHBOXES ARE ALSO IN FANCY.DM
 		lit = -1
 		update_brightness()
 		return
-	if(env.molar_density("oxygen") < (5 / CELL_VOLUME))
+	if(env.molar_density(GAS_OXYGEN) < (5 / CELL_VOLUME))
 		lit = -1
 		update_brightness()
 		if(M)
@@ -156,7 +161,9 @@ MATCHBOXES ARE ALSO IN FANCY.DM
 	item_state = "cig"
 	w_class = W_CLASS_TINY
 	body_parts_covered = 0
-	attack_verb = list("burns", "singes")
+	var/list/unlit_attack_verb = list("prods", "pokes")
+	var/list/lit_attack_verb = list("burns", "singes")
+	attack_verb = list("prods", "pokes")
 	heat_production = 1000
 	source_temperature = TEMPERATURE_FLAME
 	light_color = LIGHT_COLOR_FIRE
@@ -200,11 +207,13 @@ MATCHBOXES ARE ALSO IN FANCY.DM
 			item_state = "[initial(item_state)]on"
 			icon_state = "[initial(icon_state)]on"
 			damtype = BURN
+			attack_verb = lit_attack_verb
 		if(0)
 			name = filling ? "[filling] [initial(name)]" : "[initial(name)]"
 			item_state = "[initial(item_state)]off"
 			icon_state = "[initial(icon_state)]off"
 			damtype = BRUTE
+			attack_verb = unlit_attack_verb
 
 /obj/item/clothing/mask/cigarette/proc/update_brightness()
 	if(lit)
@@ -233,7 +242,7 @@ MATCHBOXES ARE ALSO IN FANCY.DM
 		return //Don't bother
 
 	//Items with special messages go first
-	if(istype(W, /obj/item/weapon/weldingtool))
+	if(iswelder(W))
 		var/obj/item/weapon/weldingtool/WT = W
 		if(WT.is_hot()) //Badasses dont get blinded while lighting their cig with a welding tool
 			light("<span class='notice'>[user] casually lights \his [name] with \the [W], what a badass.</span>")
@@ -346,14 +355,14 @@ MATCHBOXES ARE ALSO IN FANCY.DM
 		M.IgniteMob()
 	smoketime--
 	var/datum/gas_mixture/env = location.return_air()
-	if(smoketime <= 0 | env.molar_density("oxygen") < (5 / CELL_VOLUME))
+	if(smoketime <= 0 | env.molar_density(GAS_OXYGEN) < (5 / CELL_VOLUME))
 		if(!inside_item)
 			var/atom/new_butt = new type_butt(location) //Spawn the cigarette butt
 			transfer_fingerprints_to(new_butt)
 		lit = 0 //Actually unlight the cigarette so that the lighting can update correctly
 		update_brightness()
 		if(ismob(loc))
-			if(env.oxygen < 5)
+			if(env.molar_density(GAS_OXYGEN) < (5 / CELL_VOLUME))
 				to_chat(M, "<span class='notice'>\The [src] suddenly goes out in a weak fashion.</span>")
 			else
 				to_chat(M, "<span class='notice'>Your [name] goes out.</span>")
@@ -475,7 +484,8 @@ MATCHBOXES ARE ALSO IN FANCY.DM
 	item_state = "blunt"
 	slot_flags = SLOT_MASK
 	species_fit = list(GREY_SHAPED)
-	attack_verb = list("burns", "singes", "blunts")
+
+	lit_attack_verb = list("burns", "singes", "blunts")
 	smoketime = 420
 	chem_volume = 50 //It's a fat blunt, a really fat blunt
 
@@ -604,6 +614,7 @@ MATCHBOXES ARE ALSO IN FANCY.DM
 
 /obj/item/weapon/lighter
 	name = "cheap lighter"
+	var/initial_name	//a lighter that gets renamed for flavor needs to keep its name
 	desc = "A budget lighter. More likely lit more fingers than it did light smokes."
 	icon = 'icons/obj/items.dmi'
 	icon_state = "lighter"
@@ -620,7 +631,9 @@ MATCHBOXES ARE ALSO IN FANCY.DM
 	heat_production = 1500
 	source_temperature = TEMPERATURE_FLAME
 	slot_flags = SLOT_BELT
-	attack_verb = list("burns", "singes")
+	var/list/unlit_attack_verb = list("prods", "pokes")
+	var/list/lit_attack_verb = list("burns", "singes")
+	attack_verb = list("prods", "pokes")
 	light_color = LIGHT_COLOR_FIRE
 	var/lit = 0
 
@@ -654,15 +667,20 @@ MATCHBOXES ARE ALSO IN FANCY.DM
 /obj/item/weapon/lighter/update_icon()
 	switch(lit)
 		if(1)
-			name = "lit [initial(name)]"
+			initial_name = name
+			name = "lit [initial_name]"
 			item_state = "[initial(item_state)][color_suffix]on"
 			icon_state = "[initial(icon_state)][color_suffix]-on"
 			damtype = BURN
+			attack_verb = lit_attack_verb
 		if(0)
-			name = "[initial(name)]"
+			if(!initial_name)
+				initial_name = name
+			name = "[initial_name]"
 			item_state = "[initial(item_state)][color_suffix]off"
 			icon_state = "[initial(icon_state)][color_suffix]"
 			damtype = BRUTE
+			attack_verb = unlit_attack_verb
 
 /obj/item/weapon/lighter/proc/update_brightness()
 	if(lit)
@@ -687,7 +705,7 @@ MATCHBOXES ARE ALSO IN FANCY.DM
 	var/turf/T = get_turf(src)
 	var/datum/gas_mixture/env = T.return_air()
 	user.delayNextAttack(5) //Hold on there cowboy
-	if(!fuel | env.molar_density("oxygen") < (5 / CELL_VOLUME))
+	if(!fuel | env.molar_density(GAS_OXYGEN) < (5 / CELL_VOLUME))
 		user.visible_message("<span class='rose'>[user] attempts to light \the [src] to no avail.</span>", \
 		"<span class='notice'>You try to light \the [src], but no flame appears.</span>")
 		return
@@ -744,7 +762,7 @@ MATCHBOXES ARE ALSO IN FANCY.DM
 			visible_message("<span class='warning'>Without warning, \the [src] suddenly shuts off.</span>")
 			fueltime = null
 	var/datum/gas_mixture/env = location.return_air()
-	if(env.molar_density("oxygen") < (5 / CELL_VOLUME))
+	if(env.molar_density(GAS_OXYGEN) < (5 / CELL_VOLUME))
 		lit = 0
 		update_brightness()
 		visible_message("<span class='warning'>Without warning, the flame on \the [src] suddenly goes out in a weak fashion.</span>")
@@ -767,7 +785,7 @@ MATCHBOXES ARE ALSO IN FANCY.DM
 	var/turf/T = get_turf(src)
 	var/datum/gas_mixture/env = T.return_air()
 	user.delayNextAttack(5) //Hold on there cowboy
-	if(!fuel | env.molar_density("oxygen") < (5 / CELL_VOLUME))
+	if(!fuel | env.molar_density(GAS_OXYGEN) < (5 / CELL_VOLUME))
 		user.visible_message("<span class='rose'>[user] attempts to light \the [src] to no avail.</span>", \
 		"<span class='notice'>You try to light \the [src], but no flame appears.</span>")
 		return

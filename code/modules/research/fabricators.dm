@@ -242,7 +242,28 @@
 			update_buffer_size()
 
 	return 1
+	
+/obj/machinery/r_n_d/fabricator/proc/has_bluespace_bin()
+	var/I = /obj/item/weapon/stock_parts/matter_bin/adv/super/bluespace/
+	//return (I in component_parts)
+	return locate(I,src.component_parts)
 
+//steals mats from other fabricators, then calls remove_materials again
+/obj/machinery/r_n_d/fabricator/proc/bluespace_materials(var/datum/design/part)
+	if(!has_bluespace_bin())
+		return 0
+		
+	for (var/obj/machinery/r_n_d/fabricator/gibmats in machines)
+		if(gibmats.has_bluespace_bin())
+			for(var/gib in part.materials)	
+				if (gibmats.check_mat(part,gib) && !src.check_mat(part,gib))//they have what we need && we don't need more
+					if(copytext(gib,1,2) == "$" && !(research_flags & IGNORE_MATS))
+						var/bluespaceamount = src.get_resource_cost_w_coeff(part, gib)
+						gibmats.materials.removeAmount(gib,bluespaceamount)
+						src.materials.addAmount(gib,bluespaceamount)
+	return remove_materials(part)
+
+	
 /obj/machinery/r_n_d/fabricator/proc/check_mat(var/datum/design/being_built, var/M)
 	if(copytext(M,1,2) == "$")
 		if(src.research_flags & IGNORE_MATS)
@@ -269,7 +290,7 @@
 		src.visible_message("<font color='blue'>The [src.name] buzzes, \"Safety procedures prevent current queued item from being built.\"</font>")
 		return
 
-	if(!remove_materials(part))
+	if(!remove_materials(part) && !bluespace_materials(part))
 		stopped = 1
 		src.visible_message("<font color='blue'>The [src.name] beeps, \"Not enough materials to complete item.\"</font>")
 		return
@@ -490,7 +511,7 @@
 /obj/machinery/r_n_d/fabricator/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open=NANOUI_FOCUS)
 	if(stat & (BROKEN|NOPOWER))
 		return
-	if(user.stat || user.restrained())
+	if(!isAdminGhost(user) && (user.stat || user.restrained()))
 		return
 	if(!allowed(user) && !emagged)
 		return
@@ -630,7 +651,7 @@
 	build_part(new_design)
 
 /obj/machinery/r_n_d/fabricator/attack_hand(mob/user as mob)
-	if(user.stat || user.restrained()) //allowed is later on, so we don't check it
+	if(!isAdminGhost(user) && (user.stat || user.restrained())) //allowed is later on, so we don't check it
 		return
 
 	var/turf/exit = get_output()

@@ -43,6 +43,7 @@ var/global/list/reagents_to_log = list(FUEL, PLASMA, PACID, SACID, AMUTATIONTOXI
 	var/can_affix_to_dense_turf=0
 
 	var/has_been_invisible_sprayed = FALSE
+	var/impactsound
 
 // Whether this object can appear in holomaps
 /obj/proc/supports_holomap()
@@ -210,6 +211,9 @@ var/global/list/reagents_to_log = list(FUEL, PLASMA, PACID, SACID, AMUTATIONTOXI
 /obj/proc/cultify()
 	qdel(src)
 
+/obj/proc/clockworkify()
+	return
+
 /obj/proc/wrenchable()
 	return 0
 
@@ -231,6 +235,8 @@ var/global/list/reagents_to_log = list(FUEL, PLASMA, PACID, SACID, AMUTATIONTOXI
 	set waitfor = FALSE
 	processing_objects.Remove(src)
 
+//At some point, this proc should be changed to work like remove_air() below does.
+//However, this would likely cause problems, such as CO2 buildup in mechs and spacepods, so I'm not doing it right now.
 /obj/assume_air(datum/gas_mixture/giver)
 	if(loc)
 		return loc.assume_air(giver)
@@ -238,10 +244,8 @@ var/global/list/reagents_to_log = list(FUEL, PLASMA, PACID, SACID, AMUTATIONTOXI
 		return null
 
 /obj/remove_air(amount)
-	if(loc)
-		return loc.remove_air(amount)
-	else
-		return null
+	var/datum/gas_mixture/my_air = return_air()
+	return my_air?.remove(amount)
 
 /obj/return_air()
 	if(loc)
@@ -269,14 +273,14 @@ var/global/list/reagents_to_log = list(FUEL, PLASMA, PACID, SACID, AMUTATIONTOXI
 					_using.Remove(M)
 					continue
 
-				if(!(M in nearby)) // NOT NEARBY
-					// AIs/Robots can do shit from afar.
-					if (isAI(M) || isrobot(M))
-						is_in_use = 1
-						src.attack_ai(M)
+				// AIs/Robots can do shit from afar.
+				if (isAI(M) || isrobot(M))
+					is_in_use = 1
+					src.attack_ai(M)
 
+				else if(!(M in nearby)) // NOT NEARBY
 					// check for TK users
-					else if(M.mutations && M.mutations.len)
+					if(M.mutations && M.mutations.len)
 						if(M_TK in M.mutations)
 							is_in_use = 1
 							src.attack_hand(M, TRUE) // The second param is to make sure brain damage on the user doesn't cause the UI to not update but the action to still happen.
@@ -463,7 +467,7 @@ a {
 	if(density==0 || can_affix_to_dense_turf)
 		return TRUE// Non-dense things just don't care. Same with can_affix_to_dense_turf=TRUE objects.
 	for(var/obj/other in loc) //ensure multiple things aren't anchored in one place
-		if(other.anchored == 1 && other.density == 1 && density && !anchored && !(other.flow_flags & ON_BORDER))
+		if(other.anchored == 1 && other.density == 1 && density && !anchored && !(other.flow_flags & ON_BORDER) && !(istype(other,/obj/structure/table)))
 			to_chat(user, "\The [other] is already anchored in this location.")
 			return FALSE // NOPE
 	return TRUE
@@ -668,3 +672,6 @@ a {
 		additional_description += "It is accented in hues of [pick("red","orange","yellow","green","blue","indigo","violet","white","black","cinnamon")]. "
 	if(additional_description)
 		desc = "[initial(desc)] \n [additional_description]"
+
+/obj/proc/check_uplink_validity()
+	return TRUE

@@ -146,7 +146,7 @@ Doesn't work on other aliens/AI.*/
 	proj_type = /obj/item/projectile/energy/neurotoxin
 	cast_sound = 'sound/weapons/pierce.ogg'
 	duration = 20
-	proj_step_delay = 0.2
+	projectile_speed = 1
 
 /spell/targeted/projectile/alienneurotoxin/is_valid_target(var/target, mob/user)
 	if(!(spell_flags & INCLUDEUSER) && target == user)
@@ -287,7 +287,7 @@ Doesn't work on other aliens/AI.*/
 	spell_flags = IGNORESPACE|NODUPLICATE
 
 	summon_type = list(/obj/effect/alien/egg)
-a
+
 /spell/aoe_turf/conjure/alienegg/cast(list/targets, mob/user)
 	. = ..()
 	if(!.) //Returning 1 if we failed to cast

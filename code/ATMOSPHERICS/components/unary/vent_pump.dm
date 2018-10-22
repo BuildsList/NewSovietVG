@@ -91,7 +91,7 @@
 /obj/machinery/atmospherics/unary/vent_pump/process()
 	. = ..()
 	CHECK_DISABLED(vents)
-	if (!node)
+	if (!node1)
 		return // Turning off the vent is a PITA. - N3X
 	if(stat & (NOPOWER|BROKEN))
 		return
@@ -223,52 +223,40 @@
 	if(!signal.data["tag"] || (signal.data["tag"] != id_tag) || (signal.data["sigtype"]!="command") || (signal.data["type"] && signal.data["type"] != "vent"))
 		return 0
 
-	var/handled=0
 	if("purge" in signal.data)
 		pressure_checks &= ~1
 		pump_direction = 0
-		handled=1
 
 	if("stabilize" in signal.data)
 		pressure_checks |= 1
 		pump_direction = 1
-		handled = 1
 
 	if("power" in signal.data)
 		on = text2num(signal.data["power"])
-		handled = 1
 
 	if("power_toggle" in signal.data)
 		on = !on
-		handled = 1
 
 	if("checks" in signal.data)
 		pressure_checks = text2num(signal.data["checks"])
-		handled = 1
 
 	if("checks_toggle" in signal.data)
 		pressure_checks = (pressure_checks?0:3)
-		handled = 1
 
 	if("direction" in signal.data)
 		pump_direction = text2num(signal.data["direction"])
-		handled = 1
 
 	if("set_internal_pressure" in signal.data)
 		internal_pressure_bound = Clamp(text2num(signal.data["set_internal_pressure"]), 0, ONE_ATMOSPHERE * 50)
-		handled =1
 
 	if("set_external_pressure" in signal.data)
 		external_pressure_bound = Clamp(text2num(signal.data["set_external_pressure"]), 0, ONE_ATMOSPHERE * 50)
-		handled = 1
 
 	if("adjust_internal_pressure" in signal.data)
 		internal_pressure_bound = Clamp(internal_pressure_bound + text2num(signal.data["adjust_internal_pressure"]), 0, ONE_ATMOSPHERE * 50)
-		handled = 1
 
 	if("adjust_external_pressure" in signal.data)
 		external_pressure_bound = Clamp(external_pressure_bound + text2num(signal.data["adjust_external_pressure"]), 0, ONE_ATMOSPHERE * 50)
-		handled = 1
 
 	if("init" in signal.data)
 		name = signal.data["init"]
@@ -279,8 +267,6 @@
 			broadcast_status()
 		return //do not update_icon
 
-	if(!handled)
-		testing("\[[world.timeofday]\]: vent_pump/receive_signal: unknown command \n[signal.debug_print()]")
 	spawn(2)
 		broadcast_status()
 	update_icon()
@@ -316,29 +302,22 @@
 	return !welded
 
 /obj/machinery/atmospherics/unary/vent_pump/attackby(var/obj/item/W as obj, var/mob/user as mob)
-	if(istype(W, /obj/item/weapon/weldingtool))
+	if(iswelder(W))
 		var/obj/item/weapon/weldingtool/WT = W
-		if (WT.remove_fuel(0,user))
-			to_chat(user, "<span class='notice'>Now welding the vent.</span>")
-			if(do_after(user, src, 20))
-				if(!src || !WT.isOn())
-					return
-				playsound(src, 'sound/items/Welder2.ogg', 50, 1)
-				if(!welded)
-					user.visible_message("[user] welds the vent shut.", "You weld the vent shut.", "You hear welding.")
-					investigation_log(I_ATMOS, "has been welded shut by [user.real_name] ([formatPlayerPanel(user, user.ckey)]) at [formatJumpTo(get_turf(src))]")
-					welded = 1
-					update_icon()
-				else
-					user.visible_message("[user] unwelds the vent.", "You unweld the vent.", "You hear welding.")
-					investigation_log(I_ATMOS, "has been unwelded by [user.real_name] ([formatPlayerPanel(user, user.ckey)]) at [formatJumpTo(get_turf(src))]")
-					welded = 0
-					update_icon()
+		to_chat(user, "<span class='notice'>Now welding the vent.</span>")
+		if (WT.do_weld(user, src, 20, 1))
+			if(gcDestroyed)
+				return
+			if(!welded)
+				user.visible_message("[user] welds the vent shut.", "You weld the vent shut.", "You hear welding.")
+				investigation_log(I_ATMOS, "has been welded shut by [user.real_name] ([formatPlayerPanel(user, user.ckey)]) at [formatJumpTo(get_turf(src))]")
+				welded = 1
+				update_icon()
 			else
-				to_chat(user, "<span class='notice'>The welding tool needs to be on to start this task.</span>")
-		else
-			to_chat(user, "<span class='notice'>You need more welding fuel to complete this task.</span>")
-			return 1
+				user.visible_message("[user] unwelds the vent.", "You unweld the vent.", "You hear welding.")
+				investigation_log(I_ATMOS, "has been unwelded by [user.real_name] ([formatPlayerPanel(user, user.ckey)]) at [formatJumpTo(get_turf(src))]")
+				welded = 0
+				update_icon()
 	if (!iswrench(W))
 		return ..()
 	if (!(stat & NOPOWER) && on)
