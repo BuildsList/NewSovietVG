@@ -6,7 +6,7 @@
 	deactivation_message = "You feel like being quiet.."
 
 /datum/dna/gene/disability/loud/New()
-		..()
+	..()
 	block = LOUDBLOCK
 
 /datum/dna/gene/disability/loud/OnSay(var/mob/M, var/datum/speech/speech)
@@ -50,10 +50,10 @@
 		block=DIZZYBLOCK
 
 /datum/dna/gene/disability/dizzy/OnMobLife(var/mob/living/carbon/human/M)
-		if(!istype(M))
-			return
-		if(M_DIZZY in M.mutations)
-			M.Dizzy(300)
+	if(!istype(M))
+		return
+	if(M_DIZZY in M.mutations)
+		M.Dizzy(300)
 
 
 /datum/dna/gene/disability/sans

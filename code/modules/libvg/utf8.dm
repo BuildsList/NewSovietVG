@@ -20,8 +20,8 @@
 	return LIBVG("to_utf8", _determine_encoding(mob_or_client), message)
 
 // Converts a byte string to a UTF-8 string, sanitizes it and caps the length.
-/proc/utf8_sanitize(var/message, var/mob_or_client, var/length = MAX_MESSAGE_LEN)
-	return LIBVG("utf8_sanitize", _determine_encoding(mob_or_client), message, num2text(length))
+/proc/strip_html_simple(var/message, var/mob_or_client, var/length = MAX_MESSAGE_LEN)
+	return LIBVG("strip_html_simple", _determine_encoding(mob_or_client), message, num2text(length))
 
 // Get the length (Unicode Scalars) of a UTF-8 string.
 /proc/utf8_len(var/message)

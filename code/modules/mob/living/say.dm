@@ -208,7 +208,7 @@ var/list/department_radio_keys = list(
 	else if(message_mode)
 		say_testing(src, "Message mode is [message_mode]")
 		if(message_mode != MODE_HOLOPAD)
-		message = copytext(message, 3)
+			message = copytext(message, 3)
 
 	// SAYCODE 90.0!
 	// We construct our speech object here.
@@ -488,12 +488,11 @@ var/list/department_radio_keys = list(
 		return
 	if(setting == 0) //overridden for constructs
 		return
-
-	if (iscultist(src))
-	if(setting == 1)
+	if(iscultist(src))
+		if(setting == 1)
 			if (checkTattoo(TATTOO_CHAT))
-			return 1
-	if(setting == 2)
+				return 1
+		if(setting == 2)
 			return 1
 
 	var/datum/faction/cult = find_active_faction_by_member(mind.GetRole(LEGACY_CULT))

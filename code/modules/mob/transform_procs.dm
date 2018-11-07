@@ -297,9 +297,6 @@
 /mob/proc/Animalize()
 	var/list/mobtypes = existing_typesof(/mob/living/simple_animal)
 	var/mobpath = input("Which type of mob should [src] turn into?", "Choose a type") in mobtypes
-	if(!safe_animal(mobpath))
-		to_chat(usr, "<span class='warning'>Sorry but this mob type is currently unavailable.</span>")
-		return
 	if(!Premorph())
 		return
 	var/mob/new_mob = new mobpath(get_turf(src))

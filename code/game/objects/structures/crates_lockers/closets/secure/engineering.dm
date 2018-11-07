@@ -195,9 +195,9 @@
 	var/mapping_idtag
 
 /obj/structure/closet/crate/secure/large/reinforced/shard/New()
-		..()
-		sleep(2)
-		if(payload)
+	..()
+	sleep(2)
+	if(payload)
 		var/obj/machinery/power/supermatter/S = new payload(src)
 		if(mapping_idtag && istype(S))
 			S.id_tag = mapping_idtag
