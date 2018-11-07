@@ -739,3 +739,13 @@
 	icon_state = "uni-church"
 	item_state = "uni-church"
 	_color = "uni-church"
+
+//Custom clothing
+/obj/item/clothing/under/hiking_suit
+	name = "Hiking suit"
+	desc = "Go to the journey with Grekhem!"
+	icon_state = "hiking_suit"
+	item_state = "hiking_suit"
+	_color = "hiking_suit"
+	armor = list(melee = 10, bullet = 5, laser = 5,energy = 0, bomb = 0, bio = 0, rad = 0)
+	siemens_coefficient = 0.9
